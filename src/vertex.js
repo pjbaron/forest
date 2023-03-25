@@ -5,7 +5,7 @@
 
 class Vertex
 {
-    constructor(x, y, z)
+    constructor( x, y, z )
     {
         this.x = x || 0;
         this.y = y || 0;
@@ -16,15 +16,16 @@ class Vertex
         this.staticFriction = 0.0;
     }
 
+    static fromObject( object )
+    {
+        var v = new Vertex(object.x, object.y, object.z);
+        v.staticFriction = object.staticFriction || 0;
+        return v;
+    }
+
     clone()
     {
-        var v = new Vertex();
-        v.x = this.x;
-        v.y = this.y;
-        v.z = this.z;
-        v.oldX = this.oldX;
-        v.oldY = this.oldY;
-        v.oldZ = this.oldZ;
+        var v = new Vertex(this.x, this.y, this.z);
         v.staticFriction = this.staticFriction;
         return v;
     }

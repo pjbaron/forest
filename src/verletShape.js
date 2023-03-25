@@ -1,8 +1,5 @@
 
 
-
-
-
 class VerletShape
 {
     static PenetratingFrictionMultiplier = 0.1;
@@ -11,7 +8,7 @@ class VerletShape
 
     constructor( shapeName )
     {
-        this.shape = World.shapes.get(shapeName);
+        this.shape = World.shapes.cloneOfShape(shapeName);
         //console.log(JSON.stringify(this.shape));
     }
 

@@ -90,21 +90,22 @@ Graphics.prototype.render = function()
 }
 
 
-/// create a Shape from a Verlet object, with a node at every vertex and a rod connecting every connected pair
+/// create the graphics for a Shape from a Verlet object
+// with a node at every vertex and a rod between every connected pair
 Graphics.prototype.createShape = function( verlet )
 {
     const shape = verlet.shape;
-    const vertices = shape.vertices;
-    const edges = shape.edges;
-    const nodes = [];
 
+    const nodes = [];
+    const vertices = shape.vertices;
     for(var i = 0, l = vertices.length; i < l; i++)
     {
-        const node = this.createNode(vertices[i]);
-        nodes.push(node);
+        const sphere = this.createSphere(vertices[i]);
+        nodes[i] = sphere;
     }
     shape.nodes = nodes;
 
+    const edges = shape.edges;
     for(var i = 0, l = edges.length; i < l; i++)
     {
         const edge = edges[i];
@@ -114,7 +115,7 @@ Graphics.prototype.createShape = function( verlet )
 }
 
 
-Graphics.prototype.createNode = function( vertex )
+Graphics.prototype.createSphere = function( vertex )
 {
     // create a sphere to indicate the location of vertices[i]
     const sphere = new THREE.Mesh(new THREE.SphereGeometry(nodeRadius, 32, 32), Graphics.nodeMaterial);
@@ -130,21 +131,15 @@ Graphics.prototype.createEdge = function( edge )
     const v1 = edge.startData.vertex;
     const v2 = edge.endData.vertex;
 
-    const rod = this.createCylinder(this.objectToPoint(v1), this.objectToPoint(v2), cylinderRadius, Graphics.rodMaterial);
-    return rod;
-}
-
-
-Graphics.prototype.createCylinder = function( position1, position2, radius, material )
-{
-    // Connect the new node to the previous node with a cylinder
-    const cylinder = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, 1.0, 32), material);
-    this.setRod(cylinder, position1, position2);
+    const cylinder = new THREE.Mesh(new THREE.CylinderGeometry(cylinderRadius, cylinderRadius, 1.0, 32), Graphics.rodMaterial);
+    this.setRod(cylinder, this.objectToPoint(v1), this.objectToPoint(v2));
     this.scene.add(cylinder);
+
     return cylinder;
 }
 
 
+// make this cylinder point stretch from position1 to position2
 Graphics.prototype.setRod = function( cylinder, position1, position2 )
 {
     const l = this.distance(position1, position2);
@@ -156,6 +151,7 @@ Graphics.prototype.setRod = function( cylinder, position1, position2 )
 }
 
 
+// position this sphere at vertex
 Graphics.prototype.setSphere = function( sphere, vertex )
 {
     sphere.position.copy(this.objectToPoint(vertex));

@@ -91,18 +91,17 @@ Shapes.prototype.create = function( shape, x, y, z, staticFrictionMultiplier )
 {
     const edges = this.createEdges( shape );
 
-	const list = [];
+	const vertices = [];
 	for(var i = 0; i < shape.length; i++)
 	{
 		const c = shape[i];
 		const l = staticFrictionMultiplier * c.staticFriction;
         const vertexData = { x: c.x + x, y: c.y + y, z: c.z + z, staticFriction: l, connectedEdges: this.findAllEdges(edges, i) };
-        const angles = this.connectionsWithAngles( vertexData.connectedEdges, edges );
-		list.push(vertexData);
+		vertices.push(vertexData);
         //console.log(JSON.stringify(vertexData.connectedEdges));
 	}
 
-	return { shapeVertices: list, edges: edges };
+	return { shapeVertices: vertices, shapeEdges: edges };
 }
 
 
@@ -127,10 +126,9 @@ Shapes.prototype.createEdges = function( shape )
             // Add the connection to the list if it hasn't been added already
             if (!alreadyAdded)
             {
-                // add reference vertex, so it will update the verletShape.vertices and v.v.
                 edgeList.push({
-                    startData: { vertex: vertexData, index: i },
-                    endData: { vertex: connectedVertexData, index: connectedVertexIndex },
+                    startData: { index: i },
+                    endData: { index: connectedVertexIndex },
                 });
             }
         }
@@ -208,7 +206,7 @@ function createVector( startVertex, endVertex )
     return v;
 }
 
-function quaternionAngleBetweenVectors(v1, v2)
+function quaternionAngleBetweenVectors( v1, v2 )
 {
     const v1Length = Math.sqrt(v1.l2);
     const v2Length = Math.sqrt(v2.l2);
@@ -229,11 +227,19 @@ function quaternionAngleBetweenVectors(v1, v2)
     const sin2 = Math.sin(angle / 2);
     const q = { w: Math.cos(angle/2), x: axis.x*sin2, y: axis.y*sin2, z: axis.z*sin2 };
 
-    return q;
+    return normalizeQuat(q);
 }
-  
 
-function sameLocation(p1, p2)
+
+function normalizeQuat( q )
+{
+    var l2 = q.w * q.w + q.x * q.x + q.y * q.y + q.z * q.z;
+    var l = Math.sqrt(l2);
+    return { w: q.w / l, x: q.x / l, y: q.y / l, z: q.z / l };
+}
+
+
+function sameLocation( p1, p2 )
 {
     return (p1.x == p2.x && p1.y == p2.y && p1.z == p2.z);
 }
@@ -248,15 +254,27 @@ Shapes.prototype.offsetList = function( src, offsetIndex )
 }
 
 
-Shapes.prototype.get = function( shapeName )
+Shapes.prototype.cloneOfShape = function( shapeName )
 {
     // shallow copy the list of vertex data
     const cloneVertices = [...this.shapes[shapeName].shapeVertices];
-    const cloneEdges = [...this.shapes[shapeName].edges];
+    const cloneEdges = [...this.shapes[shapeName].shapeEdges];
 
     // go one level deeper for the connected lists
     cloneVertices.forEach((vertex) => {
         vertex.connectedEdges = [...vertex.connectedEdges];
+    });
+
+    // deeper clone for edge objects
+    cloneEdges.forEach((edge) => {
+        edge.endData.vertex = cloneVertices[edge.endData.index];
+        edge.startData.vertex = cloneVertices[edge.startData.index];
+    });
+
+    // finally, calculate the 'rest' angles between all edge pairs joining a specific vertex
+    // TODO: this isn't a 'clone' operation, find a better way (it has to come _after_ the edge vertex references are created)
+    cloneVertices.forEach((vertex) => {
+        this.connectionsWithAngles( vertex.connectedEdges, cloneEdges );
     });
 
     return { shapeVertices: cloneVertices, edges: cloneEdges };
