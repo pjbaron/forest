@@ -3,20 +3,31 @@
 // (not general purpose)  TODO: rename to be more specific!
 //
 
-function Vertex()
+class Vertex
 {
-	this.x = 0;
-	this.y = 0;
-	this.z = 0;
-	this.oldX = 0;
-	this.oldY = 0;
-	this.oldZ = 0;
-	this.constraints = [];
-	this.staticFriction = 0.0;
+    constructor(x, y, z)
+    {
+        this.x = x || 0;
+        this.y = y || 0;
+        this.z = z || 0;
+        this.oldX = this.x;
+        this.oldY = this.y;
+        this.oldZ = this.z;
+        this.staticFriction = 0.0;
+    }
+
+    clone()
+    {
+        var v = new Vertex();
+        v.x = this.x;
+        v.y = this.y;
+        v.z = this.z;
+        v.oldX = this.oldX;
+        v.oldY = this.oldY;
+        v.oldZ = this.oldZ;
+        v.staticFriction = this.staticFriction;
+        return v;
+    }
 }
 
 
-Vertex.prototype.addConstraint = function( _constraint )
-{
-	this.constraints.push( _constraint );
-}

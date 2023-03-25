@@ -5,72 +5,69 @@
 //
 
 
-// globally accessible world constants
-World.worldSize = 50;
-World.worldScale = 10;
-World.gravity = -0.6;
-
-World.maxPlants = 1;
-
-World.eyeLevel = 30;
-World.groundLevel = 0;
-
-
-// globally accessible system references
-World.shapes = null;
-World.graphics = null;
-
-
-
-function World()
+class World
 {
-    World.Instance = this;
-    World.graphics = new Graphics();
-    World.shapes = new Shapes();
-    this.plants = [];
-}
+    // static world constants
+    static worldSize = 50;
+    static worldScale = 10;
+    static gravity = -0.6;
+
+    static maxPlants = 1;
+
+    static eyeLevel = 30;
+    static groundLevel = 0;
 
 
-World.prototype.create = function()
-{
-    this.createPlants();
-
-    // commence the render loop, it is self-sustaining hereafter
-    this.animate();
-}
+    // static system references
+    static shapes = null;
+    static graphics = null;
 
 
-World.prototype.createPlants = function()
-{
-    // initialize plants
-    for (let i = 0; i < World.maxPlants; i++)
+    constructor()
     {
-        var x = World.worldSize * Math.random() - World.worldSize / 2;
-        var z = World.worldSize * Math.random() - World.worldSize / 2;
-        var plant = new Plant("stick2", x, World.groundLevel, z);
-        this.plants.push(plant);
+        World.Instance = this;
+        World.graphics = new Graphics();
+        World.shapes = new Shapes();
+        this.plants = [];
+    }
+
+    create()
+    {
+        this.createPlants();
+
+        // commence the render loop, it is self-sustaining hereafter
+        this.animate();
+    }
+
+    createPlants()
+    {
+        // initialize plants
+        for (let i = 0; i < World.maxPlants; i++)
+        {
+            var x = World.worldSize * Math.random() - World.worldSize / 2;
+            var z = World.worldSize * Math.random() - World.worldSize / 2;
+            var plant = new Plant("stick2", x, World.groundLevel, z);
+            this.plants.push(plant);
+        }
+    }
+
+    update()
+    {
+        // update every plant
+        this.plants.forEach((plant) =>
+        {
+            plant.update();
+        });
+    }
+
+    animate()
+    {
+        requestAnimationFrame(this.animate.bind(this));
+        this.update();
+        World.graphics.render();
     }
 }
 
 
-World.prototype.update = function()
-{
-    // update every plant
-    this.plants.forEach((plant) => {
-        // TODO: life-cycle and possible death
-        plant.update();
-        // TODO: update the graphical representation to match the new verlet node positions
-    });
-}
-
-
-World.prototype.animate = function()
-{
-    requestAnimationFrame(this.animate.bind(this));
-    this.update();
-    World.graphics.render();
-}
-
-
 // create the World and start the animate loop
-new World().create();
+const world = new World().create();
