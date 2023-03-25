@@ -17,7 +17,7 @@ class Plant
     update()
     {
         // update including wind-force
-        this.verletShape.update({ x: Math.cos(Date.now() / 1000.0) * 1.0, y: 0, z: 0 });
+        this.verletShape.update({ x: Math.cos(Date.now() / 1000.0) * World.windForce, y: 0, z: 0 });
         World.graphics.update(this.verletShape);
     }
 }

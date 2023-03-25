@@ -29,7 +29,7 @@ class VerletShape
     {
         this.move(force);
         const friction = this.constrainToWorld();
-        for (var i = 0; i < VerletShape.numIterations; i++)
+        for(var i = 0; i < VerletShape.numIterations; i++)
             this.constrainToShape(friction);
         return true;
     }
@@ -38,7 +38,7 @@ class VerletShape
     {
         const list = [];
 
-        for (var i = 0; i < shapeVertices.length; i++)
+        for(var i = 0; i < shapeVertices.length; i++)
         {
             var v = new Vertex(
                 shapeVertices[i].x * World.worldScale + offset.x,
@@ -83,7 +83,7 @@ class VerletShape
     move( force )
     {
         var l = this.shape.vertices.length;
-        for (var i = 0; i < l; i++)
+        for(var i = 0; i < l; i++)
         {
             var v1 = this.shape.vertices[i];
             if (v1.staticFriction == 1.0)
@@ -121,7 +121,7 @@ class VerletShape
     {
         const friction = [];
         const l = this.shape.vertices.length;
-        for (var i = 0; i < l; i++)
+        for(var i = 0; i < l; i++)
         {
             const v1 = this.shape.vertices[i];
             var f = 0.0;
@@ -140,7 +140,7 @@ class VerletShape
     constrainToShape()
     {
         // for every edge in the shape
-        for (var i = 0, l = this.shape.edges.length; i < l; i++)
+        for(var i = 0, l = this.shape.edges.length; i < l; i++)
         {
             const edge = this.shape.edges[i];
             const v1 = edge.startData.vertex;

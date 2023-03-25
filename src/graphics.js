@@ -9,8 +9,8 @@ Graphics.rodMaterial = new THREE.MeshBasicMaterial({ color: 0x7f2f00 });
 
 
 // constants
-const nodeRadius = 3.0;
-const cylinderRadius = 2.0;
+const nodeRadius = 0.75;
+const cylinderRadius = 0.5;
 
 
 function Graphics()

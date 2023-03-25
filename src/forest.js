@@ -9,10 +9,11 @@ class World
 {
     // static world constants
     static worldSize = 50;
-    static worldScale = 10;
-    static gravity = -0.6;
+    static worldScale = 5;
+    static gravity = -0.2;
+    static windForce = 0.1;
 
-    static maxPlants = 1;
+    static maxPlants = 2;
 
     static eyeLevel = 30;
     static groundLevel = 0;
@@ -42,7 +43,7 @@ class World
     createPlants()
     {
         // initialize plants
-        for (let i = 0; i < World.maxPlants; i++)
+        for(let i = 0; i < World.maxPlants; i++)
         {
             var x = World.worldSize * Math.random() - World.worldSize / 2;
             var z = World.worldSize * Math.random() - World.worldSize / 2;
