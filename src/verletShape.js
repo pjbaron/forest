@@ -9,16 +9,15 @@ class VerletShape
     static numIterations = 12;
 
 
-    constructor(shapeName)
+    constructor( shapeName )
     {
         this.shape = World.shapes.get(shapeName);
         //console.log(JSON.stringify(this.shape));
     }
 
-    create(offset)
+    create( offset )
     {
-        this.vertices = this.createVertices(this.shape.vertices, offset);
-        this.edges = this.shape.edges;
+        this.shape.vertices = this.createVertices(this.shape.shapeVertices, offset);
     }
 
     destroy()
@@ -26,7 +25,7 @@ class VerletShape
         this.world = null;
     }
 
-    update(force)
+    update( force )
     {
         this.move(force);
         const friction = this.constrainToWorld();
@@ -35,7 +34,7 @@ class VerletShape
         return true;
     }
 
-    createVertices(shapeVertices, offset)
+    createVertices( shapeVertices, offset )
     {
         const list = [];
 
@@ -46,18 +45,47 @@ class VerletShape
                 shapeVertices[i].y * World.worldScale + offset.y,
                 shapeVertices[i].z * World.worldScale + offset.z);
             v.staticFriction = shapeVertices[i].staticFriction;
+            this.replaceEdgeVertexReferences(i, v);
             list.push(v);
         }
+        this.calculateAllEdgeLengths();
 
         return list;
     }
 
-    move(force)
+    replaceEdgeVertexReferences( index, vertex )
     {
-        var l = this.vertices.length;
+        const edges = this.shape.edges;
+        for(var i = 0, l = edges.length; i < l; i++)
+        {
+            if (edges[i].startData.index == index)
+            {
+                edges[i].startData.vertex = vertex;
+            }
+            if (edges[i].endData.index == index)
+            {
+                edges[i].endData.vertex = vertex;
+            }
+        }
+    }
+
+    calculateAllEdgeLengths()
+    {
+        const edges = this.shape.edges;
+        for(var i = 0, l = edges.length; i < l; i++)
+        {
+            const vector = edges[i].vector;
+            var v = createVector(edges[i].startData.vertex, edges[i].endData.vertex);
+            edges[i].vector = v;
+        }
+    }
+
+    move( force )
+    {
+        var l = this.shape.vertices.length;
         for (var i = 0; i < l; i++)
         {
-            var v1 = this.vertices[i];
+            var v1 = this.shape.vertices[i];
             if (v1.staticFriction == 1.0)
                 continue;
 
@@ -92,10 +120,10 @@ class VerletShape
     constrainToWorld()
     {
         const friction = [];
-        const l = this.vertices.length;
+        const l = this.shape.vertices.length;
         for (var i = 0; i < l; i++)
         {
-            const v1 = this.vertices[i];
+            const v1 = this.shape.vertices[i];
             var f = 0.0;
             var py = World.groundLevel - v1.y;
             if (py > 0)
@@ -112,13 +140,13 @@ class VerletShape
     constrainToShape()
     {
         // for every edge in the shape
-        for (var i = 0, l = this.edges.length; i < l; i++)
+        for (var i = 0, l = this.shape.edges.length; i < l; i++)
         {
-            const edge = this.edges[i];
+            const edge = this.shape.edges[i];
             const v1 = edge.startData.vertex;
             const v2 = edge.endData.vertex;
             const length = Math.sqrt(edge.vector.l2);
-
+//console.log(i +  " " + length);
             // move both ends towards the initial edge length
             var dx = v2.x - v1.x;
             var dy = v2.y - v1.y;
@@ -143,7 +171,7 @@ class VerletShape
             }
         }
     }
-    
+
 }
 
 

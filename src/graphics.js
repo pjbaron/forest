@@ -36,9 +36,9 @@ Graphics.prototype.create = function()
         0.1,
         1000
     );
+    this.camera.rotation.x = -10 * Math.PI / 180.0;
     this.camera.position.y = World.groundLevel + World.eyeLevel;
     this.camera.position.z = World.worldSize * 2;
-    this.camera.rotation.x = -10 * Math.PI / 180.0;
 
     this.renderer = new THREE.WebGLRenderer();
     this.renderer.toneMapping = THREE.LinearToneMapping;
@@ -62,43 +62,25 @@ Graphics.prototype.create = function()
 Graphics.prototype.update = function( verlet )
 {
     const shape = verlet.shape;
-    const vertices = verlet.vertices;
-    
-    const nodes = shape.nodes;
-    const rods = shape.rods;
 
-    const l = nodes.length;
-    for(var i = 0; i < l; i++)
+    const vertices = shape.vertices;
+    const edges = shape.edges;
+    
+    for(var i = 0, l = edges.length; i < l; i++)
+    {
+        const edge = edges[i];
+        const v1 = this.objectToPoint(edge.startData.vertex);
+        const v2 = this.objectToPoint(edge.endData.vertex);
+        //console.log(i + " " + JSON.stringify(v1) + " " + JSON.stringify(v2));
+        // TODO: we should not link the graphic to the edge like this, but it's an easy place to start
+        this.setRod(edge.graphicRod, v1, v2);
+    }
+
+    for(var i = 0, l = vertices.length; i < l; i++)
     {
         const v = vertices[i];
-        const v1 = this.objectToPoint(v);
-
-        const node = nodes[i];
-        node.position.copy(v1);
-
-        const constraints = v.constraints;
-        const k = constraints.length;
-        for(var j = 0; j < k; j++)
-        {
-            const v2 = this.objectToPoint(constraints[j].otherEnd(v));
-            const rod = this.findRod(rods, constraints[j].i1, constraints[j].i2);
-            this.setRod(rod, v1, v2);
-        }
+        this.setSphere(shape.nodes[i], v);
     }
-}
-
-
-Graphics.prototype.findRod = function(rods, i1, i2)
-{
-    const l = rods.length;
-    for(var i = 0; i < l; i++)
-    {
-        if (rods[i].i1 == i1 && rods[i].i2 == i2)
-            return rods[i];
-        if (rods[i].i1 == i2 && rods[i].i2 == i1)
-            return rods[i];
-    }
-    return null;
 }
 
 
@@ -111,52 +93,49 @@ Graphics.prototype.render = function()
 /// create a Shape from a Verlet object, with a node at every vertex and a rod connecting every connected pair
 Graphics.prototype.createShape = function( verlet )
 {
-    const nodes = [];
-    const rods = [];
-
     const shape = verlet.shape;
-    const vertices = verlet.vertices;
-    
-    const l = shape.length;
-    for(var i = 0; i < l; i++)
+    const vertices = shape.vertices;
+    const edges = shape.edges;
+    const nodes = [];
+
+    for(var i = 0, l = vertices.length; i < l; i++)
     {
-        // create a sphere to indicate the location of vertices[i]
-        const node = this.createNode(this.objectToPoint(vertices[i]), nodeRadius, Graphics.nodeMaterial);
+        const node = this.createNode(vertices[i]);
         nodes.push(node);
-
-        const connections = shape[i].connected;
-        const k = connections.length;
-        for(var j = 0; j < k; j++)
-        {
-            const c = connections[j];
-            // create a cylinder to link shape[i] with shape[c]
-            const rod = this.createRod(this.objectToPoint(vertices[i]), this.objectToPoint(vertices[c]), cylinderRadius, Graphics.rodMaterial);
-            rod.i1 = i;
-            rod.i2 = c;
-            rods.push(rod);
-            //console.log("rod[" + (rods.length - 1) + "] connects vertices " + i + " and " + c + " " + j);
-        }
     }
-
-    // attach the new graphics to the shape object
     shape.nodes = nodes;
-    shape.rods = rods;
-    //console.log(`${shape.length} has ${nodes.length} nodes and ${rods.length} constraints`);
 
-    return shape;
+    for(var i = 0, l = edges.length; i < l; i++)
+    {
+        const edge = edges[i];
+        const rod = this.createEdge(edge);
+        edge.graphicRod = rod;
+    }
 }
 
 
-Graphics.prototype.createNode = function(position, radius, material)
+Graphics.prototype.createNode = function( vertex )
 {
-    const node = new THREE.Mesh(new THREE.SphereGeometry(radius, 32, 32), material);
-    node.position.copy(position);
-    this.scene.add(node);
-    return node;
+    // create a sphere to indicate the location of vertices[i]
+    const sphere = new THREE.Mesh(new THREE.SphereGeometry(nodeRadius, 32, 32), Graphics.nodeMaterial);
+    sphere.position.copy(this.objectToPoint(vertex));
+    this.scene.add(sphere);
+    return sphere;
+}
+
+// create a placeholder edge cylinder using the shape vertices
+// this will be replaced in Verlet, and setRod will move the cylinder to the correct world positions thereafter
+Graphics.prototype.createEdge = function( edge )
+{
+    const v1 = edge.startData.vertex;
+    const v2 = edge.endData.vertex;
+
+    const rod = this.createCylinder(this.objectToPoint(v1), this.objectToPoint(v2), cylinderRadius, Graphics.rodMaterial);
+    return rod;
 }
 
 
-Graphics.prototype.createRod = function(position1, position2, radius, material)
+Graphics.prototype.createCylinder = function( position1, position2, radius, material )
 {
     // Connect the new node to the previous node with a cylinder
     const cylinder = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, 1.0, 32), material);
@@ -166,15 +145,20 @@ Graphics.prototype.createRod = function(position1, position2, radius, material)
 }
 
 
-Graphics.prototype.setRod = function(cylinder, position1, position2)
+Graphics.prototype.setRod = function( cylinder, position1, position2 )
 {
     const l = this.distance(position1, position2);
     cylinder.scale.y = l;
-
     cylinder.position.copy(position1.lerp(position2, 0.5));
 
     var axis = new THREE.Vector3(0, 1, 0);
     cylinder.quaternion.setFromUnitVectors(axis, (position2.sub(position1)).normalize());
+}
+
+
+Graphics.prototype.setSphere = function( sphere, vertex )
+{
+    sphere.position.copy(this.objectToPoint(vertex));
 }
 
 
@@ -215,7 +199,7 @@ Graphics.prototype.createSky = function()
 }
 
 
-Graphics.prototype.distance = function(p1, p2)
+Graphics.prototype.distance = function( p1, p2 )
 {
     const dx = p1.x - p2.x;
     const dy = p1.y - p2.y;
@@ -224,7 +208,7 @@ Graphics.prototype.distance = function(p1, p2)
 }
 
 
-Graphics.prototype.objectToPoint = function(object)
+Graphics.prototype.objectToPoint = function( object )
 {
     return new THREE.Vector3(object.x, object.y, object.z);
 }

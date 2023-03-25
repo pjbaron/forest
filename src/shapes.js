@@ -57,7 +57,7 @@ Shapes.prototype.create = function( shape, x, y, z, staticFrictionMultiplier )
 		list.push(vertexData);
 	}
 
-	return { vertices: list, edges: edges };
+	return { shapeVertices: list, edges: edges };
 }
 
 
@@ -166,7 +166,8 @@ function quaternionAngleBetweenVectors(v1, v2)
     const angle = Math.atan2(Math.sqrt(crossProduct.x*crossProduct.x + crossProduct.y*crossProduct.y + crossProduct.z*crossProduct.z), dotProduct);
 
     const axis = { x: crossProduct.x, y: crossProduct.y, z: crossProduct.z };
-    const q = { w: Math.cos(angle/2), x: axis.x*Math.sin(angle/2), y: axis.y*Math.sin(angle/2), z: axis.z*Math.sin(angle/2) };
+    const sin2 = Math.sin(angle / 2);
+    const q = { w: Math.cos(angle/2), x: axis.x*sin2, y: axis.y*sin2, z: axis.z*sin2 };
 
     return q;
 }
@@ -229,7 +230,7 @@ Shapes.prototype.offsetList = function( src, offsetIndex )
 Shapes.prototype.get = function( shapeName )
 {
     // shallow copy the list of vertex data
-    const cloneVertices = [...this.shapes[shapeName].vertices];
+    const cloneVertices = [...this.shapes[shapeName].shapeVertices];
     const cloneEdges = [...this.shapes[shapeName].edges];
 
     // go one level deeper for the connected lists
@@ -237,5 +238,5 @@ Shapes.prototype.get = function( shapeName )
         vertex.connectedEdges = [...vertex.connectedEdges];
     });
 
-    return { vertices: cloneVertices, edges: cloneEdges };
+    return { shapeVertices: cloneVertices, edges: cloneEdges };
 }
