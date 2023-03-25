@@ -173,45 +173,6 @@ function quaternionAngleBetweenVectors(v1, v2)
 }
   
 
-// TODO: part one of an ugly brute-force solution
-// remove duplicate nodes and vertices from the list
-Shapes.prototype.reduce = function( list )
-{
-    //console.log("reduce " + JSON.stringify(list));
-    const length = list.length;
-    return list.filter((item, index) =>
-        {
-            // search forwards in the list
-            for(var i = index + 1; i < length; i++)
-            {
-                if (sameLocation(item, list[i]))
-                {
-                    // combine the staticFriction values from the two nodes
-                    list[i].staticFriction *= item.staticFriction;
-                    this.fixConnections(list, i);
-                    return false;
-                }
-            }
-            return true;
-        });
-}
-
-
-// TODO: part two of an ugly brute-force solution
-// decrement connection indices when 'reduce' removes a duplicate node from the shape list
-Shapes.prototype.fixConnections = function( list, index )
-{
-    const length = list.length;
-    for(var i = index; i < length; i++)
-    {
-        const connections = list[i].connected;
-        for(var j = 0; j < connections.length; j++)
-            if (connections[j] >= index)
-                connections[j]--;
-    }
-}
-
-
 function sameLocation(p1, p2)
 {
     return (p1.x == p2.x && p1.y == p2.y && p1.z == p2.z);
