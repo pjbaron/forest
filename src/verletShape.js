@@ -3,7 +3,7 @@
 class VerletShape
 {
     static PenetratingFrictionMultiplier = 0.1;
-    static numIterations = 12;
+    static numIterations = 10;
 
 
     constructor( shapeName )
@@ -96,39 +96,42 @@ class VerletShape
 
     move( force )
     {
+        // for all vertices in the shape
         var l = this.shape.vertices.length;
-        //console.log(this.shape.vertices[l - 1]);
         for(var i = 0; i < l; i++)
         {
             var v1 = this.shape.vertices[i];
+
+            // if the vertex is locked, exit early, don't even try to move it
             if (v1.staticFriction == 1.0)
                 continue;
 
-            // TODO: apply force scaled by the cross-section area perpendicular to the force vector
+            // calculate simple forces on the vertex
             var fgy = force.y + World.gravity;
-            var mag = Math.sqrt(force.x * force.x + fgy * fgy + force.z * force.z);
-            //if (mag <= v1.staticFriction)
-                //continue;
-
+            // don't allow mag to become zero because that will cause divide by zero errors
+            var mag = Math.max(Math.sqrt(force.x * force.x + fgy * fgy + force.z * force.z), 0.001);
             var forceMag = (1.0 - v1.staticFriction) / mag;
-            var applyForce = { x: force.x * forceMag / mag, y: fgy * forceMag / mag, z: force.z * forceMag / mag };
+            var applyForce = { x: force.x * forceMag, y: fgy * forceMag, z: force.z * forceMag };
 
-            var dx = v1.x - v1.oldX;
-            var dy = v1.y - v1.oldY;
-            var dz = v1.z - v1.oldZ;
+            // calculate the new vertex position, using the offset from its position last frame and the forces being applied
+            var dx = 2 * v1.x - v1.oldX + applyForce.x;
+            var dy = 2 * v1.y - v1.oldY + applyForce.y;
+            var dz = 2 * v1.z - v1.oldZ + applyForce.z;
 
+            // remember where the vertex was this frame, ready for next frame
             v1.oldX = v1.x;
             v1.oldY = v1.y;
             v1.oldZ = v1.z;
 
-            const percent = 0.5;
-            var offx = dx * percent;
-            var offy = dy * percent;
-            var offz = dz * percent;
+            // calculate the amount of movement to restore our position
+            var velx = dx;
+            var vely = dy;
+            var velz = dz;
 
-            v1.x += offx + applyForce.x;
-            v1.y += offy + applyForce.y;
-            v1.z += offz + applyForce.z;
+            // set the new position
+            v1.x = velx;
+            v1.y = vely;
+            v1.z = velz;
         }
     }
 
@@ -161,7 +164,6 @@ class VerletShape
             const v1 = edge.startData.vertex;
             const v2 = edge.endData.vertex;
             const restLength = Math.sqrt(edge.vector.l2);
-//console.log(i +  " " + length);
             // move both ends towards the initial edge length
             var dx = v2.x - v1.x;
             var dy = v2.y - v1.y;

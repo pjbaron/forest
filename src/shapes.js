@@ -52,15 +52,15 @@ const stick2 =
 	{ x: 1, y: 0, z: -1, staticFriction: 1.0, connected: [3,6,4] },
 	{ x: -1, y: 0, z: -1, staticFriction: 1.0, connected: [0,7,5] },	//3
 	// middle
-	{ x: -1, y: 4, z: 1, staticFriction: 0.5, connected: [5,8,10,6] },	//4
-	{ x: 1, y: 4, z: 1, staticFriction: 0.5, connected: [6,9,11,7] },
-	{ x: 1, y: 4, z: -1, staticFriction: 0.5, connected: [7,10,8] },
-	{ x: -1, y: 4, z: -1, staticFriction: 0.5, connected: [4,11,9] },	//7
+	{ x: -1, y: 10, z: 1, staticFriction: 0.5, connected: [5,8,10,6] },	//4
+	{ x: 1, y: 10, z: 1, staticFriction: 0.5, connected: [6,9,11,7] },
+	{ x: 1, y: 10, z: -1, staticFriction: 0.5, connected: [7,10,8] },
+	{ x: -1, y: 10, z: -1, staticFriction: 0.5, connected: [4,11,9] },	//7
 	// top
-	{ x: -1, y: 8, z: 1, staticFriction: 0.5, connected: [9] },	//8
-	{ x: 1, y: 8, z: 1, staticFriction: 0.5, connected: [10] },
-	{ x: 1, y: 8, z: -1, staticFriction: 0.5, connected: [11] },
-	{ x: -1, y: 8, z: -1, staticFriction: 0.5, connected: [8] },	//11
+	{ x: -1, y: 20, z: 1, staticFriction: 0.5, connected: [9] },	//8
+	{ x: 1, y: 20, z: 1, staticFriction: 0.5, connected: [10] },
+	{ x: 1, y: 20, z: -1, staticFriction: 0.5, connected: [11] },
+	{ x: -1, y: 20, z: -1, staticFriction: 0.5, connected: [8] },	//11
 ];
 
 // const stick =

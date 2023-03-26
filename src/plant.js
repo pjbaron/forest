@@ -16,10 +16,10 @@ class Plant
         World.graphics.createShape(this.verletShape);
     }
 
-    update()
+    update( wind )
     {
         // update physics, including wind-force
-        this.verletShape.update({ x: Math.cos(Date.now() / 1000.0) * World.windForce, y: 0, z: 0 });
+        this.verletShape.update(wind);
 
         // update the graphic representation to match the current physics configuration
         World.graphics.update(this.verletShape);

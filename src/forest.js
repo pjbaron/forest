@@ -8,14 +8,14 @@
 class World
 {
     // static world constants
-    static worldSize = 150;
+    static worldSize = 800;
     static worldScale = 5;
-    static gravity = -0.2;
-    static windForce = 0.05;
+    static gravity = -0.98;
+    static windForce = 0.1;
 
-    static maxPlants = 20;
+    static maxPlants = 200;
 
-    static eyeLevel = 30;
+    static eyeLevel = 150;
     static groundLevel = 0;
 
 
@@ -54,10 +54,11 @@ class World
 
     update()
     {
+        var wind = { x: (Math.cos(Date.now() / 29000.0) + Math.cos(Date.now() / 2300.0) + Math.cos(Date.now() / 663)) * World.windForce, y: 0, z: 0 };
         // update every plant
-         this.plants.forEach((plant) =>
+        this.plants.forEach((plant) =>
         {
-            plant.update();
+            plant.update(wind);
         });
     }
 

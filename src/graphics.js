@@ -38,7 +38,7 @@ Graphics.prototype.create = function()
     );
     this.camera.rotation.x = -10 * Math.PI / 180.0;
     this.camera.position.y = World.groundLevel + World.eyeLevel;
-    this.camera.position.z = World.worldSize * 2;
+    this.camera.position.z = World.worldSize;
 
     this.renderer = new THREE.WebGLRenderer();
     this.renderer.toneMapping = THREE.LinearToneMapping;
@@ -46,7 +46,7 @@ Graphics.prototype.create = function()
     document.body.appendChild(this.renderer.domElement);
 
     // create a green ground plane
-    this.groundGeometry = new THREE.PlaneGeometry(1000, 1000);
+    this.groundGeometry = new THREE.PlaneGeometry(5000, 5000);
     this.groundMaterial = new THREE.MeshBasicMaterial({ color: 0x305020 });
     this.ground = new THREE.Mesh(this.groundGeometry, this.groundMaterial);
     this.ground.rotation.x = -Math.PI / 2; // rotate the ground so it's horizontal
@@ -55,6 +55,9 @@ Graphics.prototype.create = function()
     
     // create a sky
     this.createSky();
+
+    // add fog
+    Graphics.scene.fog = new THREE.Fog( 0xb5b5c5, World.worldSize * 0.75, World.worldSize * 1.5 );
 }
 
 
@@ -169,11 +172,11 @@ Graphics.prototype.createSky = function()
     this.sun = new THREE.Vector3();
 
     const effectController = {
-        turbidity: 10,
-        rayleigh: 3,
-        mieCoefficient: 0.005,
-        mieDirectionalG: 0.7,
-        elevation: 2,
+        turbidity: 0.25,
+        rayleigh: 0.5,
+        mieCoefficient: 0.004,
+        mieDirectionalG: 0.5,
+        elevation: 9,
         azimuth: 180,
         exposure: this.renderer.toneMappingExposure
     };
