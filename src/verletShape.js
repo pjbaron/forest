@@ -33,21 +33,32 @@ class VerletShape
 
     createVertices( shapeVertices, offset )
     {
-        const list = [];
+        const vertexList = [];
 
         for(var i = 0; i < shapeVertices.length; i++)
         {
-            var v = new Vertex(
-                shapeVertices[i].x * World.worldScale + offset.x,
-                shapeVertices[i].y * World.worldScale + offset.y,
-                shapeVertices[i].z * World.worldScale + offset.z);
-            v.staticFriction = shapeVertices[i].staticFriction;
-            this.replaceEdgeVertexReferences(i, v);
-            list.push(v);
+            const baseVertex = shapeVertices[i];
+            var worldVertex = new Vertex(
+                baseVertex.x * World.worldScale + offset.x,
+                baseVertex.y * World.worldScale + offset.y,
+                baseVertex.z * World.worldScale + offset.z);
+            worldVertex.staticFriction = baseVertex.staticFriction;
+            vertexList[i] = worldVertex;
         }
-        this.calculateAllEdgeLengths();
 
-        return list;
+        for(var i = 0; i < vertexList.length; i++)
+        {
+            this.replaceEdgeVertexReferences(i, vertexList[i]);
+        }
+
+        // calculate the 'rest' angles between all edge pairs joining a specific vertex
+        // shapeVertices.forEach((vertex) => {
+        //     World.shapes.connectionsWithAngles( vertex.connectedEdges, this.shape.edges );
+        // });
+
+        this.calculateAllRestingEdgeLengths();
+
+        return vertexList;
     }
 
     replaceEdgeVertexReferences( index, vertex )
@@ -62,11 +73,12 @@ class VerletShape
             if (edges[i].endData.index == index)
             {
                 edges[i].endData.vertex = vertex;
+                //console.log(`end ${i} ${index}`);
             }
         }
     }
 
-    calculateAllEdgeLengths()
+    calculateAllRestingEdgeLengths()
     {
         const edges = this.shape.edges;
         for(var i = 0, l = edges.length; i < l; i++)
@@ -80,6 +92,7 @@ class VerletShape
     move( force )
     {
         var l = this.shape.vertices.length;
+        //console.log(this.shape.vertices[l - 1]);
         for(var i = 0; i < l; i++)
         {
             var v1 = this.shape.vertices[i];
@@ -112,6 +125,19 @@ class VerletShape
             v1.y += offy + applyForce.y;
             v1.z += offz + applyForce.z;
         }
+
+        
+// TODO: test code only... why don't these match?!
+
+        const edges = this.shape.edges;
+        var index = 4;
+        for(var i = 0, l = edges.length; i < l; i++)
+        {
+            if (edges[i].startData.index == index)
+            {
+                console.log(`${JSON.stringify(this.shape.vertices[index])} ${JSON.stringify(edges[i].startData.vertex)}`);
+            }
+        }
     }
 
     constrainToWorld()
@@ -142,14 +168,14 @@ class VerletShape
             const edge = this.shape.edges[i];
             const v1 = edge.startData.vertex;
             const v2 = edge.endData.vertex;
-            const length = Math.sqrt(edge.vector.l2);
+            const restLength = Math.sqrt(edge.vector.l2);
 //console.log(i +  " " + length);
             // move both ends towards the initial edge length
             var dx = v2.x - v1.x;
             var dy = v2.y - v1.y;
             var dz = v2.z - v1.z;
             var d = Math.max(Math.sqrt(dx * dx + dy * dy + dz * dz), Number.MIN_VALUE);
-            var diff = d - length;
+            var diff = d - restLength;
             var pcent = Math.min((diff / d) / 2.0, 1.0);
             var offx = dx * pcent;
             var offy = dy * pcent;

@@ -54,11 +54,12 @@ class World
 
     update()
     {
+        this.plants[0].update();
         // update every plant
-        this.plants.forEach((plant) =>
-        {
-            plant.update();
-        });
+        // this.plants.forEach((plant) =>
+        // {
+        //     plant.update();
+        // });
     }
 
     animate()

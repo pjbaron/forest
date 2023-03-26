@@ -256,26 +256,18 @@ Shapes.prototype.offsetList = function( src, offsetIndex )
 
 Shapes.prototype.cloneOfShape = function( shapeName )
 {
+    // const vertexData = { x: c.x + x, y: c.y + y, z: c.z + z, staticFriction: l, connectedEdges: this.findAllEdges(edges, i) };
+
     // shallow copy the list of vertex data
     const cloneVertices = [...this.shapes[shapeName].shapeVertices];
-    const cloneEdges = [...this.shapes[shapeName].shapeEdges];
 
     // go one level deeper for the connected lists
     cloneVertices.forEach((vertex) => {
         vertex.connectedEdges = [...vertex.connectedEdges];
     });
-
-    // deeper clone for edge objects
-    cloneEdges.forEach((edge) => {
-        edge.endData.vertex = cloneVertices[edge.endData.index];
-        edge.startData.vertex = cloneVertices[edge.startData.index];
-    });
-
-    // finally, calculate the 'rest' angles between all edge pairs joining a specific vertex
-    // TODO: this isn't a 'clone' operation, find a better way (it has to come _after_ the edge vertex references are created)
-    cloneVertices.forEach((vertex) => {
-        this.connectionsWithAngles( vertex.connectedEdges, cloneEdges );
-    });
+    
+    // shallow copy the edge data, the deeper data here must be replaced when instantiating a physics copy of this shape
+    const cloneEdges = [...this.shapes[shapeName].shapeEdges];
 
     return { shapeVertices: cloneVertices, edges: cloneEdges };
 }
