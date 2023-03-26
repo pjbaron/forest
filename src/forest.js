@@ -8,12 +8,12 @@
 class World
 {
     // static world constants
-    static worldSize = 50;
+    static worldSize = 150;
     static worldScale = 5;
     static gravity = -0.2;
-    static windForce = 0.1;
+    static windForce = 0.05;
 
-    static maxPlants = 2;
+    static maxPlants = 20;
 
     static eyeLevel = 30;
     static groundLevel = 0;
@@ -54,12 +54,11 @@ class World
 
     update()
     {
-        this.plants[0].update();
         // update every plant
-        // this.plants.forEach((plant) =>
-        // {
-        //     plant.update();
-        // });
+         this.plants.forEach((plant) =>
+        {
+            plant.update();
+        });
     }
 
     animate()
@@ -72,4 +71,5 @@ class World
 
 
 // create the World and start the animate loop
-const world = new World().create();
+const world = new World();
+world.create();

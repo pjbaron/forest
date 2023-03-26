@@ -269,5 +269,14 @@ Shapes.prototype.cloneOfShape = function( shapeName )
     // shallow copy the edge data, the deeper data here must be replaced when instantiating a physics copy of this shape
     const cloneEdges = [...this.shapes[shapeName].shapeEdges];
 
+    for(var i = 0; i < cloneEdges.length; i++)
+    {
+        const edge = cloneEdges[i];
+        cloneEdges[i] = {
+            startData: { index: edge.startData.index },
+            endData: { index: edge.endData.index }
+        };
+    }
+
     return { shapeVertices: cloneVertices, edges: cloneEdges };
 }

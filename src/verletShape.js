@@ -15,6 +15,7 @@ class VerletShape
     create( offset )
     {
         this.shape.vertices = this.createVertices(this.shape.shapeVertices, offset);
+        this.createEdges();
     }
 
     destroy()
@@ -46,6 +47,12 @@ class VerletShape
             vertexList[i] = worldVertex;
         }
 
+        return vertexList;
+    }
+
+    createEdges()
+    {
+        const vertexList = this.shape.vertices;
         for(var i = 0; i < vertexList.length; i++)
         {
             this.replaceEdgeVertexReferences(i, vertexList[i]);
@@ -57,8 +64,6 @@ class VerletShape
         // });
 
         this.calculateAllRestingEdgeLengths();
-
-        return vertexList;
     }
 
     replaceEdgeVertexReferences( index, vertex )
@@ -124,19 +129,6 @@ class VerletShape
             v1.x += offx + applyForce.x;
             v1.y += offy + applyForce.y;
             v1.z += offz + applyForce.z;
-        }
-
-        
-// TODO: test code only... why don't these match?!
-
-        const edges = this.shape.edges;
-        var index = 4;
-        for(var i = 0, l = edges.length; i < l; i++)
-        {
-            if (edges[i].startData.index == index)
-            {
-                console.log(`${JSON.stringify(this.shape.vertices[index])} ${JSON.stringify(edges[i].startData.vertex)}`);
-            }
         }
     }
 
