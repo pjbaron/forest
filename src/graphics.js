@@ -31,14 +31,14 @@ function Graphics()
 Graphics.prototype.create = function()
 {
     this.camera = new THREE.PerspectiveCamera(
-        75,
+        70,
         window.innerWidth / window.innerHeight,
         0.1,
-        1000
+        5000
     );
     this.camera.rotation.x = -10 * Math.PI / 180.0;
     this.camera.position.y = World.groundLevel + World.eyeLevel;
-    this.camera.position.z = World.worldSize;
+    this.camera.position.z = World.worldSize * 0.75;
 
     this.renderer = new THREE.WebGLRenderer();
     this.renderer.toneMapping = THREE.LinearToneMapping;
@@ -46,7 +46,7 @@ Graphics.prototype.create = function()
     document.body.appendChild(this.renderer.domElement);
 
     // create a green ground plane
-    this.groundGeometry = new THREE.PlaneGeometry(5000, 5000);
+    this.groundGeometry = new THREE.PlaneGeometry(15000, 15000);
     this.groundMaterial = new THREE.MeshBasicMaterial({ color: 0x305020 });
     this.ground = new THREE.Mesh(this.groundGeometry, this.groundMaterial);
     this.ground.rotation.x = -Math.PI / 2; // rotate the ground so it's horizontal
@@ -57,7 +57,7 @@ Graphics.prototype.create = function()
     this.createSky();
 
     // add fog
-    Graphics.scene.fog = new THREE.Fog( 0xb5b5c5, World.worldSize * 0.75, World.worldSize * 1.5 );
+    Graphics.scene.fog = new THREE.Fog( 0xb5b5c5, World.worldSize * 0.90, World.worldSize * 2.0 );
 }
 
 
@@ -166,18 +166,18 @@ Graphics.prototype.createSky = function()
     // https://threejs.org/examples/webgl_shaders_sky.html
 
     this.sky = new Sky();
-    this.sky.scale.setScalar( 450000 );
+    this.sky.scale.setScalar( 500000 );
     Graphics.scene.add( this.sky );
 
     this.sun = new THREE.Vector3();
 
     const effectController = {
-        turbidity: 0.25,
-        rayleigh: 0.5,
+        turbidity: 3.0,
+        rayleigh: 0.2,
         mieCoefficient: 0.004,
         mieDirectionalG: 0.5,
-        elevation: 9,
-        azimuth: 180,
+        elevation: 25,
+        azimuth: 180,                                   // angle to the sun around Y (vertical) axis, 180 = straight ahead
         exposure: this.renderer.toneMappingExposure
     };
 

@@ -25,10 +25,10 @@ class VerletShape
 
     update( force )
     {
-        this.move(force);
         const friction = this.constrainToWorld();
         for(var i = 0; i < VerletShape.numIterations; i++)
             this.constrainToShape(friction);
+        this.move(force);
         return true;
     }
 
@@ -169,7 +169,8 @@ class VerletShape
             var dy = v2.y - v1.y;
             var dz = v2.z - v1.z;
             var d = Math.max(Math.sqrt(dx * dx + dy * dy + dz * dz), Number.MIN_VALUE);
-            var diff = d - restLength;
+            const stiffness = 0.95;
+            var diff = (d - restLength) * stiffness;
             var pcent = Math.min((diff / d) / 2.0, 1.0);
             var offx = dx * pcent;
             var offy = dy * pcent;

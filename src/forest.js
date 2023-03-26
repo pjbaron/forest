@@ -9,13 +9,13 @@ class World
 {
     // static world constants
     static worldSize = 800;
-    static worldScale = 5;
+    static worldScale = 3;
     static gravity = -0.98;
-    static windForce = 0.1;
+    static windForce = 0.5;
 
     static maxPlants = 200;
 
-    static eyeLevel = 150;
+    static eyeLevel = 120;
     static groundLevel = 0;
 
 
