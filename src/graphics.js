@@ -57,7 +57,7 @@ Graphics.prototype.create = function()
     this.createSky();
 
     // add fog
-    Graphics.scene.fog = new THREE.Fog( 0xb5b5c5, World.worldSize * 0.90, World.worldSize * 2.0 );
+    Graphics.scene.fog = new THREE.Fog( 0xb5b5b5, World.worldSize * 0.25, World.worldSize * 3 );
 }
 
 

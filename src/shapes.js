@@ -78,7 +78,7 @@ const stick2 =
 
 
 
-function Shapes()
+function BasicShapes()
 {
     this.shapes = [];
     //this.shapes["cube"] = this.create(cube, 0, 0, 0, 1.0);
@@ -87,9 +87,11 @@ function Shapes()
 }
 
 
-Shapes.prototype.create = function( shape, x, y, z, staticFrictionMultiplier )
+BasicShapes.prototype.create = function( shape, x, y, z, staticFrictionMultiplier )
 {
-    const edges = this.createEdges( shape );
+    const results = this.createEdgesAndAdjacency( shape );
+    const edges = results.edges;
+    const adjacencyList = results.adjList;
 
 	const vertices = [];
 	for(var i = 0; i < shape.length; i++)
@@ -101,24 +103,42 @@ Shapes.prototype.create = function( shape, x, y, z, staticFrictionMultiplier )
         //console.log(JSON.stringify(vertexData.connectedEdges));
 	}
 
-	return { shapeVertices: vertices, shapeEdges: edges };
+    const edgeLoops = findMinimalLoops(adjacencyList);
+    const vertexLoops = edgeLoopsToVertexLoops(edgeLoops, adjacencyList);
+    console.log(JSON.stringify(vertexLoops));
+
+	return { shapeVertices: vertices, shapeEdges: edges, adjacencyList: adjacencyList };
 }
 
 
-Shapes.prototype.createEdges = function( shape )
+function edgeLoopsToVertexLoops( loops, edges )
+{
+    // TODO: the labels are wrong (edges = adjList now) and adjList is not returning vertex loops
+    loops.forEach((loop) => {
+        console.log("edge loop " + JSON.stringify(loop));
+        loop.forEach((edgeIndex) => {
+            const edge = edges[edgeIndex];
+            console.log(JSON.stringify(edge));
+        })
+    });
+}
+
+BasicShapes.prototype.createEdgesAndAdjacency = function( shape )
 {
     const edgeList = [];
+    const adjList = [];
 
     // Iterate over each vertex
     for(var i = 0, l = shape.length; i < l; i++)
     {
         const vertexData = shape[i];
+        adjList[i] = [];
 
         // Iterate over each connected vertex
         for(var j = 0, k = vertexData.connected.length; j < k; j++)
         {
             const connectedVertexIndex = vertexData.connected[j];
-            const connectedVertexData = shape[connectedVertexIndex];
+            //const connectedVertexData = shape[connectedVertexIndex];
 
             // Check if the connection has already been added to the list
             const alreadyAdded = (this.findEdge(edgeList, i, connectedVertexIndex) != -1);
@@ -126,6 +146,9 @@ Shapes.prototype.createEdges = function( shape )
             // Add the connection to the list if it hasn't been added already
             if (!alreadyAdded)
             {
+                // Add the edge index to the adjacency list
+                adjList[i].push(connectedVertexIndex);
+
                 edgeList.push({
                     startData: { index: i },
                     endData: { index: connectedVertexIndex },
@@ -134,12 +157,12 @@ Shapes.prototype.createEdges = function( shape )
         }
     }
 
-    return edgeList;
+    return { edges: edgeList, adjList: adjList };
 }
 
 
 /// Find all edges that include the vertex referenced by vertexIndex
-Shapes.prototype.findEdge = function( edges, fromIndex, toIndex )
+BasicShapes.prototype.findEdge = function( edges, fromIndex, toIndex )
 {
     for(var i = 0, l = edges.length; i < l; i++)
     {
@@ -154,7 +177,7 @@ Shapes.prototype.findEdge = function( edges, fromIndex, toIndex )
 
 
 /// Find all edges that include the vertex referenced by vertexIndex
-Shapes.prototype.findAllEdges = function( edges, vertexIndex )
+BasicShapes.prototype.findAllEdges = function( edges, vertexIndex )
 {
     const list = [];
 
@@ -168,7 +191,7 @@ Shapes.prototype.findAllEdges = function( edges, vertexIndex )
 }
 
 
-Shapes.prototype.connectionsWithAngles = function( edgeIndices, edges )
+BasicShapes.prototype.connectionsWithAngles = function( edgeIndices, edges )
 {
     for(var i = 0, l = edgeIndices.length; i < l; i++)
     {
@@ -245,7 +268,7 @@ function sameLocation( p1, p2 )
 }
 
 
-Shapes.prototype.offsetList = function( src, offsetIndex )
+BasicShapes.prototype.offsetList = function( src, offsetIndex )
 {
 	const list = [];
 	for(var i = 0; i < src.length; i++)
@@ -254,7 +277,7 @@ Shapes.prototype.offsetList = function( src, offsetIndex )
 }
 
 
-Shapes.prototype.cloneOfShape = function( shapeName )
+BasicShapes.prototype.cloneOfShape = function( shapeName )
 {
     // const vertexData = { x: c.x + x, y: c.y + y, z: c.z + z, staticFriction: l, connectedEdges: this.findAllEdges(edges, i) };
 

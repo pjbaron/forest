@@ -4,6 +4,7 @@ class VerletShape
 {
     static PenetratingFrictionMultiplier = 0.1;
     static numIterations = 10;
+    static stiffness = 0.97;
 
 
     constructor( shapeName )
@@ -169,8 +170,7 @@ class VerletShape
             var dy = v2.y - v1.y;
             var dz = v2.z - v1.z;
             var d = Math.max(Math.sqrt(dx * dx + dy * dy + dz * dz), Number.MIN_VALUE);
-            const stiffness = 0.95;
-            var diff = (d - restLength) * stiffness;
+            var diff = (d - restLength) * VerletShape.stiffness;
             var pcent = Math.min((diff / d) / 2.0, 1.0);
             var offx = dx * pcent;
             var offy = dy * pcent;

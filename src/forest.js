@@ -1,9 +1,3 @@
-// World
-// Shapes
-//   Plant
-//     Verlet
-//
-
 
 class World
 {
@@ -11,7 +5,7 @@ class World
     static worldSize = 800;
     static worldScale = 3;
     static gravity = -0.98;
-    static windForce = 0.5;
+    static windForce = 0.3;
 
     static maxPlants = 200;
 
@@ -28,7 +22,7 @@ class World
     {
         World.Instance = this;
         World.graphics = new Graphics();
-        World.shapes = new Shapes();
+        World.shapes = new BasicShapes();
         this.plants = [];
     }
 
