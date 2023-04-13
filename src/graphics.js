@@ -36,7 +36,8 @@ Graphics.prototype.create = function()
         0.1,
         5000
     );
-    this.camera.rotation.x = -10 * Math.PI / 180.0;
+    //this.camera.rotation.x = -10 * Math.PI / 180.0;
+    this.camera.rotation.y = 0 * Math.PI / 180.0;
     this.camera.position.y = World.groundLevel + World.eyeLevel;
     this.camera.position.z = World.worldSize * 0.75;
 
@@ -65,8 +66,8 @@ Graphics.prototype.create = function()
 Graphics.prototype.update = function( verlet )
 {
     const shape = verlet.shape;
-
     const vertices = shape.vertices;
+    /*
     const edges = shape.edges;
     
     for(var i = 0, l = edges.length; i < l; i++)
@@ -74,8 +75,6 @@ Graphics.prototype.update = function( verlet )
         const edge = edges[i];
         const v1 = this.objectToPoint(edge.startData.vertex);
         const v2 = this.objectToPoint(edge.endData.vertex);
-        //console.log(i + " " + JSON.stringify(v1) + " " + JSON.stringify(v2));
-        // TODO: we should not link the graphic to the edge like this, but it's an easy place to start
         this.setRod(edge.graphicRod, v1, v2);
     }
 
@@ -84,6 +83,9 @@ Graphics.prototype.update = function( verlet )
         const v = vertices[i];
         this.setSphere(shape.nodes[i], v);
     }
+    */
+
+    this.updateShape(shape.solidMesh, vertices);
 }
 
 
@@ -98,25 +100,147 @@ Graphics.prototype.render = function()
 Graphics.prototype.createShape = function( verlet )
 {
     const shape = verlet.shape;
+    const vertices = shape.vertices;
+    const faces = shape.faces;
+    /*
+    const edges = shape.edges;
 
     const nodes = [];
-    const vertices = shape.vertices;
     for(var i = 0, l = vertices.length; i < l; i++)
     {
+        // add a sphere at each node
         const sphere = this.createSphere(vertices[i]);
         nodes[i] = sphere;
     }
     shape.nodes = nodes;
 
-    const edges = shape.edges;
     for(var i = 0, l = edges.length; i < l; i++)
     {
+        // create a rod to join all node pairs (edges)
         const edge = edges[i];
         const rod = this.createEdge(edge);
         edge.graphicRod = rod;
     }
+    */
+
+    // create a solid to enclose this cuboid
+    const solidMesh = this.createSolid(vertices, faces);
+    shape.solidMesh = solidMesh;
 }
 
+
+Graphics.prototype.createSolid = function(vertices, indices)
+{
+    const positions = [];
+    for(var i = 0, l = vertices.length; i < l; i++)
+    {
+        positions.push(vertices[i].x);
+        positions.push(vertices[i].y);
+        positions.push(vertices[i].z);
+    }
+    // Create a new BufferGeometry and set its attributes
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    geometry.setIndex(indices);
+    geometry.computeVertexNormals();
+
+    // Create a new Mesh and add it to the scene
+    const material = new THREE.MeshLambertMaterial({ color: 0x5f1f00 });
+    material.side = THREE.FrontSide;
+    const mesh = new THREE.Mesh(geometry, material);
+    this.scene.add(mesh);
+
+    return mesh;
+}
+
+
+// Update the positions of the vertices
+Graphics.prototype.updateShape = function( mesh, vertices )
+{
+    // TODO: dry
+    const positions = [];
+    for(var i = 0, l = vertices.length; i < l; i++)
+    {
+        positions.push(vertices[i].x);
+        positions.push(vertices[i].y);
+        positions.push(vertices[i].z);
+    }
+
+    const positionsAttribute = mesh.geometry.getAttribute('position');
+    positionsAttribute.set(positions);
+    positionsAttribute.needsUpdate = true;
+    mesh.geometry.computeVertexNormals();
+}
+
+/*
+    const positions =
+    [
+        // Bottom face
+        vertices[0].x, vertices[0].y, vertices[0].z,
+        vertices[1].x, vertices[1].y, vertices[1].z,
+        vertices[2].x, vertices[2].y, vertices[2].z,
+        vertices[0].x, vertices[0].y, vertices[0].z,
+        vertices[2].x, vertices[2].y, vertices[2].z,
+        vertices[3].x, vertices[3].y, vertices[3].z,
+      
+        // Top face
+        vertices[4].x, vertices[4].y, vertices[4].z,
+        vertices[5].x, vertices[5].y, vertices[5].z,
+        vertices[6].x, vertices[6].y, vertices[6].z,
+        vertices[4].x, vertices[4].y, vertices[4].z,
+        vertices[6].x, vertices[6].y, vertices[6].z,
+        vertices[7].x, vertices[7].y, vertices[7].z,
+      
+        // Front face
+        vertices[0].x, vertices[0].y, vertices[0].z,
+        vertices[1].x, vertices[1].y, vertices[1].z,
+        vertices[5].x, vertices[5].y, vertices[5].z,
+        vertices[0].x, vertices[0].y, vertices[0].z,
+        vertices[5].x, vertices[5].y, vertices[5].z,
+        vertices[4].x, vertices[4].y, vertices[4].z,
+      
+        // Back face
+        vertices[3].x, vertices[3].y, vertices[3].z,
+        vertices[6].x, vertices[6].y, vertices[6].z,
+        vertices[2].x, vertices[2].y, vertices[2].z,
+        vertices[3].x, vertices[3].y, vertices[3].z,
+        vertices[7].x, vertices[7].y, vertices[7].z,
+        vertices[6].x, vertices[6].y, vertices[6].z,
+      
+        // Left face
+        vertices[0].x, vertices[0].y, vertices[0].z,
+        vertices[7].x, vertices[7].y, vertices[7].z,
+        vertices[3].x, vertices[3].y, vertices[3].z,
+        vertices[0].x, vertices[0].y, vertices[0].z,
+        vertices[4].x, vertices[4].y, vertices[4].z,
+        vertices[7].x, vertices[7].y, vertices[7].z,
+      
+        // Right face
+        vertices[1].x, vertices[1].y, vertices[1].z,
+        vertices[2].x, vertices[2].y, vertices[2].z,
+        vertices[6].x, vertices[6].y, vertices[6].z,
+        vertices[1].x, vertices[1].y, vertices[1].z,
+        vertices[6].x, vertices[6].y, vertices[6].z,
+        vertices[5].x, vertices[5].y, vertices[5].z,
+    ];
+
+    // Create a buffer geometry and set its vertex attributes
+    const geometry = new THREE.BufferGeometry();
+    const positionNumComponents = 3;
+    geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(positions), positionNumComponents));
+
+    // Compute vertex normals to enable smooth shading
+    geometry.computeVertexNormals();
+
+    // Create a material and mesh for the cuboid
+    const material = new THREE.MeshLambertMaterial({ color: 0x5f1f00 });
+    const mesh = new THREE.Mesh(geometry, material);
+
+    // Add the cuboid to the scene
+    this.scene.add(mesh);
+    return mesh;
+}
+*/
 
 Graphics.prototype.createSphere = function( vertex )
 {
@@ -191,6 +315,11 @@ Graphics.prototype.createSky = function()
     const theta = THREE.MathUtils.degToRad( effectController.azimuth );
 
     this.sun.setFromSphericalCoords( 1, phi, theta );
+
+    // Create a new DirectionalLight and add it to the scene
+    const light = new THREE.DirectionalLight(0xffffff, 5);
+    light.position.set(-0.5, 1, -0.5);
+    this.scene.add(light);
 
     uniforms[ 'sunPosition' ].value.copy( this.sun );
 

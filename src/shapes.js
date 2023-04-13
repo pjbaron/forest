@@ -1,97 +1,54 @@
 
-
-// const cube =
-// [
-// 	// bottom
-// 	{ x: 2, y: 0, z: -2, staticFriction: 1.0, connected: [1, 2, 4, 7, 6] },	//0
-// // TODO: link to 2 is missing
-// 	{ x: -2, y: 0, z: -2, staticFriction: 1.0, connected: [2, 5, 4, 7] },
-// 	{ x: -2, y: 0, z: 2, staticFriction: 1.0, connected: [3, 6, 5] },
-// 	{ x: 2, y: 0, z: 2, staticFriction: 1.0, connected: [0, 7, 6] },	//3
-// 	// top
-// 	{ x: 2, y: 4, z: -2, staticFriction: 0.5, connected: [5] },	//4
-// // TODO: link to 6 is missing
-// 	{ x: -2, y: 4, z: -2, staticFriction: 0.5, connected: [6, 7] },
-// 	{ x: -2, y: 4, z: 2, staticFriction: 0.5, connected: [7] },
-// 	{ x: 2, y: 4, z: 2, staticFriction: 0.5, connected: [4] },	//7
-// ];
-
 const cube =
 [
 	// bottom
-	{ x: -2, y: 0, z: 2, staticFriction: 1.0, connected: [1,4,6] },	//0
-	{ x: 2, y: 0, z: 2, staticFriction: 1.0, connected: [2,5,7] },
-	{ x: 2, y: 0, z: -2, staticFriction: 1.0, connected: [3,6,4] },
-	{ x: -2, y: 0, z: -2, staticFriction: 1.0, connected: [0,7,5] },	//3
-	// top
-	{ x: -2, y: 4, z: 2, staticFriction: 0.5, connected: [5] },	//4
-	{ x: 2, y: 4, z: 2, staticFriction: 0.5, connected: [6] },
-	{ x: 2, y: 4, z: -2, staticFriction: 0.5, connected: [7] },
-	{ x: -2, y: 4, z: -2, staticFriction: 0.5, connected: [4] },	//7
-];
-
-const stick =
-[
-	// bottom
-	{ x: -1, y: 0, z: -1, staticFriction: 1.0, connected: [1, 2, 4, 7] },	//0
-	{ x: 1, y: 0, z: -1, staticFriction: 1.0, connected: [2, 5, 4] },
-	{ x: 1, y: 0, z: 1, staticFriction: 1.0, connected: [3, 6, 5] },
-	{ x: -1, y: 0, z: 1, staticFriction: 1.0, connected: [0, 7, 6] },	//3
-	// top
-	{ x: -1, y: 10, z: -1, staticFriction: 0.5, connected: [5] },	//4
-	{ x: 1, y: 10, z: -1, staticFriction: 0.5, connected: [6, 7] },
-	{ x: 1, y: 10, z: 1, staticFriction: 0.5, connected: [7] },
-	{ x: -1, y: 10, z: 1, staticFriction: 0.5, connected: [4] },	//7
-];
-
-const stick2 =
-[
-	// bottom
-	{ x: -1, y: 0, z: 1, staticFriction: 1.0, connected: [1,4,6] },	//0
+    // first point gets full list of the face vertices
+	{ x: -1, y: 0, z: 1, staticFriction: 1.0, connected: [1,4,6],
+        faces: [
+            // bottom
+            0, 1, 2,
+            0, 2, 3,
+            // right
+            5, 1, 2,
+            5, 2, 6,
+            // top
+            7, 4, 5,
+            7, 5, 6,
+            // left
+            4, 7, 3,
+            4, 3, 0,
+            // back
+            3, 7, 6,
+            3, 6, 2,
+            // front
+            4, 0, 1,
+            4, 1, 5, 
+        ]
+    },	//0
 	{ x: 1, y: 0, z: 1, staticFriction: 1.0, connected: [2,5,7] },
 	{ x: 1, y: 0, z: -1, staticFriction: 1.0, connected: [3,6,4] },
 	{ x: -1, y: 0, z: -1, staticFriction: 1.0, connected: [0,7,5] },	//3
-	// middle
-	{ x: -1, y: 10, z: 1, staticFriction: 0.5, connected: [5,8,10,6] },	//4
-	{ x: 1, y: 10, z: 1, staticFriction: 0.5, connected: [6,9,11,7] },
-	{ x: 1, y: 10, z: -1, staticFriction: 0.5, connected: [7,10,8] },
-	{ x: -1, y: 10, z: -1, staticFriction: 0.5, connected: [4,11,9] },	//7
 	// top
-	{ x: -1, y: 20, z: 1, staticFriction: 0.5, connected: [9] },	//8
-	{ x: 1, y: 20, z: 1, staticFriction: 0.5, connected: [10] },
-	{ x: 1, y: 20, z: -1, staticFriction: 0.5, connected: [11] },
-	{ x: -1, y: 20, z: -1, staticFriction: 0.5, connected: [8] },	//11
+	{ x: -1, y: 12, z: 1, staticFriction: 0.5, connected: [5] },	//4
+	{ x: 1, y: 12, z: 1, staticFriction: 0.5, connected: [6] },
+	{ x: 1, y: 12, z: -1, staticFriction: 0.5, connected: [7] },
+	{ x: -1, y: 12, z: -1, staticFriction: 0.5, connected: [4] },	//7
 ];
-
-// const stick =
-// [
-// 	{ x: 0, y: 0, z: 0, staticFriction: 1.0, connected: [1] },	//0
-// 	{ x: 0, y: 4, z: 0, staticFriction: 0.5, connected: [] },	//0
-// ]
-
-// const stick2 =
-// [
-// 	{ x: 0, y: 0, z: 0, staticFriction: 1.0, connected: [1] },	//0
-// 	{ x: 0, y: 4, z: 0, staticFriction: 0.5, connected: [2] },	//1
-// 	{ x: 0, y: 8, z: 0, staticFriction: 0.5, connected: [] },	//2
-// ]
 
 
 
 function BasicShapes()
 {
     this.shapes = [];
-    //this.shapes["cube"] = this.create(cube, 0, 0, 0, 1.0);
-    //this.shapes["stick"] = this.create(stick, 0, 0, 0, 1.0);
-    this.shapes["stick2"] = this.create(stick2, 0, 0, 0, 1.0);
+    this.shapes["cube"] = this.create(cube, 0, 0, 0, 1.0);
 }
 
 
 BasicShapes.prototype.create = function( shape, x, y, z, staticFrictionMultiplier )
 {
-    const results = this.createEdgesAndAdjacency( shape );
+    const results = this.createEdges( shape );
     const edges = results.edges;
-    const adjacencyList = results.adjList;
+    const faces = shape[0].faces;
 
 	const vertices = [];
 	for(var i = 0; i < shape.length; i++)
@@ -103,42 +60,23 @@ BasicShapes.prototype.create = function( shape, x, y, z, staticFrictionMultiplie
         //console.log(JSON.stringify(vertexData.connectedEdges));
 	}
 
-    const edgeLoops = findMinimalLoops(adjacencyList);
-    const vertexLoops = edgeLoopsToVertexLoops(edgeLoops, adjacencyList);
-    console.log(JSON.stringify(vertexLoops));
-
-	return { shapeVertices: vertices, shapeEdges: edges, adjacencyList: adjacencyList };
+	return { shapeVertices: vertices, shapeEdges: edges, shapeFaces: faces };
 }
 
 
-function edgeLoopsToVertexLoops( loops, edges )
-{
-    // TODO: the labels are wrong (edges = adjList now) and adjList is not returning vertex loops
-    loops.forEach((loop) => {
-        console.log("edge loop " + JSON.stringify(loop));
-        loop.forEach((edgeIndex) => {
-            const edge = edges[edgeIndex];
-            console.log(JSON.stringify(edge));
-        })
-    });
-}
-
-BasicShapes.prototype.createEdgesAndAdjacency = function( shape )
+BasicShapes.prototype.createEdges = function( shape )
 {
     const edgeList = [];
-    const adjList = [];
 
     // Iterate over each vertex
     for(var i = 0, l = shape.length; i < l; i++)
     {
         const vertexData = shape[i];
-        adjList[i] = [];
 
         // Iterate over each connected vertex
         for(var j = 0, k = vertexData.connected.length; j < k; j++)
         {
             const connectedVertexIndex = vertexData.connected[j];
-            //const connectedVertexData = shape[connectedVertexIndex];
 
             // Check if the connection has already been added to the list
             const alreadyAdded = (this.findEdge(edgeList, i, connectedVertexIndex) != -1);
@@ -146,9 +84,6 @@ BasicShapes.prototype.createEdgesAndAdjacency = function( shape )
             // Add the connection to the list if it hasn't been added already
             if (!alreadyAdded)
             {
-                // Add the edge index to the adjacency list
-                adjList[i].push(connectedVertexIndex);
-
                 edgeList.push({
                     startData: { index: i },
                     endData: { index: connectedVertexIndex },
@@ -157,7 +92,7 @@ BasicShapes.prototype.createEdgesAndAdjacency = function( shape )
         }
     }
 
-    return { edges: edgeList, adjList: adjList };
+    return { edges: edgeList };
 }
 
 
@@ -301,5 +236,5 @@ BasicShapes.prototype.cloneOfShape = function( shapeName )
         };
     }
 
-    return { shapeVertices: cloneVertices, edges: cloneEdges };
+    return { shapeVertices: cloneVertices, edges: cloneEdges, faces: this.shapes[shapeName].shapeFaces };
 }

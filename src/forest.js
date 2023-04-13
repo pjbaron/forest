@@ -41,7 +41,7 @@ class World
         {
             var x = World.worldSize * Math.random() - World.worldSize / 2;
             var z = World.worldSize * Math.random() - World.worldSize / 2;
-            var plant = new Plant("stick2", x, World.groundLevel, z);
+            var plant = new Plant("cube", x, World.groundLevel, z);
             this.plants.push(plant);
         }
     }
