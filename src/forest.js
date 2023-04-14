@@ -8,6 +8,10 @@ class World
     static windForce = 0.3;
 
     static maxPlants = 200;
+    static seedEnergyMin = 64;
+    static seedEnergyMax = 256;
+    static sunlightMultiplier = 1.0;        // seasonal variation and global control
+    static energyCostMultiplier = 1.0;      // seasonal variation and global control
 
     static eyeLevel = 120;
     static groundLevel = 0;

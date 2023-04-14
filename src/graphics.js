@@ -142,7 +142,8 @@ Graphics.prototype.createSolid = function(vertices, indices)
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
     geometry.setIndex(indices);
-    geometry.computeVertexNormals();
+    //geometry.computeVertexNormals();
+    //geometry.computeFaceNormals();
 
     // Create a new Mesh and add it to the scene
     const material = new THREE.MeshLambertMaterial({ color: 0x5f1f00 });
