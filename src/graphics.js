@@ -6,7 +6,7 @@ Graphics.scene = new THREE.Scene();
 // materials
 Graphics.nodeMaterial = new THREE.MeshBasicMaterial({ color: 0x5f1f00 });
 Graphics.rodMaterial = new THREE.MeshBasicMaterial({ color: 0x7f2f00 });
-
+Graphics.redMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
 
 // constants
 const nodeRadius = 0.75;
@@ -67,7 +67,7 @@ Graphics.prototype.update = function( verlet )
 {
     const shape = verlet.shape;
     const vertices = shape.vertices;
-    /*
+    
     const edges = shape.edges;
     
     for(var i = 0, l = edges.length; i < l; i++)
@@ -83,7 +83,7 @@ Graphics.prototype.update = function( verlet )
         const v = vertices[i];
         this.setSphere(shape.nodes[i], v);
     }
-    */
+    
 
     this.updateShape(shape.solidMesh, vertices);
 }
@@ -102,7 +102,7 @@ Graphics.prototype.createShape = function( verlet )
     const shape = verlet.shape;
     const vertices = shape.vertices;
     const faces = shape.faces;
-    /*
+
     const edges = shape.edges;
 
     const nodes = [];
@@ -110,6 +110,8 @@ Graphics.prototype.createShape = function( verlet )
     {
         // add a sphere at each node
         const sphere = this.createSphere(vertices[i]);
+        // TODO: debug hint - show which vertices have high staticFriction
+        if (vertices[i].staticFriction > 0.9) sphere.material = Graphics.redMaterial;
         nodes[i] = sphere;
     }
     shape.nodes = nodes;
@@ -121,7 +123,6 @@ Graphics.prototype.createShape = function( verlet )
         const rod = this.createEdge(edge);
         edge.graphicRod = rod;
     }
-    */
 
     // create a solid to enclose this cuboid
     const solidMesh = this.createSolid(vertices, faces);
@@ -173,75 +174,6 @@ Graphics.prototype.updateShape = function( mesh, vertices )
     mesh.geometry.computeVertexNormals();
 }
 
-/*
-    const positions =
-    [
-        // Bottom face
-        vertices[0].x, vertices[0].y, vertices[0].z,
-        vertices[1].x, vertices[1].y, vertices[1].z,
-        vertices[2].x, vertices[2].y, vertices[2].z,
-        vertices[0].x, vertices[0].y, vertices[0].z,
-        vertices[2].x, vertices[2].y, vertices[2].z,
-        vertices[3].x, vertices[3].y, vertices[3].z,
-      
-        // Top face
-        vertices[4].x, vertices[4].y, vertices[4].z,
-        vertices[5].x, vertices[5].y, vertices[5].z,
-        vertices[6].x, vertices[6].y, vertices[6].z,
-        vertices[4].x, vertices[4].y, vertices[4].z,
-        vertices[6].x, vertices[6].y, vertices[6].z,
-        vertices[7].x, vertices[7].y, vertices[7].z,
-      
-        // Front face
-        vertices[0].x, vertices[0].y, vertices[0].z,
-        vertices[1].x, vertices[1].y, vertices[1].z,
-        vertices[5].x, vertices[5].y, vertices[5].z,
-        vertices[0].x, vertices[0].y, vertices[0].z,
-        vertices[5].x, vertices[5].y, vertices[5].z,
-        vertices[4].x, vertices[4].y, vertices[4].z,
-      
-        // Back face
-        vertices[3].x, vertices[3].y, vertices[3].z,
-        vertices[6].x, vertices[6].y, vertices[6].z,
-        vertices[2].x, vertices[2].y, vertices[2].z,
-        vertices[3].x, vertices[3].y, vertices[3].z,
-        vertices[7].x, vertices[7].y, vertices[7].z,
-        vertices[6].x, vertices[6].y, vertices[6].z,
-      
-        // Left face
-        vertices[0].x, vertices[0].y, vertices[0].z,
-        vertices[7].x, vertices[7].y, vertices[7].z,
-        vertices[3].x, vertices[3].y, vertices[3].z,
-        vertices[0].x, vertices[0].y, vertices[0].z,
-        vertices[4].x, vertices[4].y, vertices[4].z,
-        vertices[7].x, vertices[7].y, vertices[7].z,
-      
-        // Right face
-        vertices[1].x, vertices[1].y, vertices[1].z,
-        vertices[2].x, vertices[2].y, vertices[2].z,
-        vertices[6].x, vertices[6].y, vertices[6].z,
-        vertices[1].x, vertices[1].y, vertices[1].z,
-        vertices[6].x, vertices[6].y, vertices[6].z,
-        vertices[5].x, vertices[5].y, vertices[5].z,
-    ];
-
-    // Create a buffer geometry and set its vertex attributes
-    const geometry = new THREE.BufferGeometry();
-    const positionNumComponents = 3;
-    geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(positions), positionNumComponents));
-
-    // Compute vertex normals to enable smooth shading
-    geometry.computeVertexNormals();
-
-    // Create a material and mesh for the cuboid
-    const material = new THREE.MeshLambertMaterial({ color: 0x5f1f00 });
-    const mesh = new THREE.Mesh(geometry, material);
-
-    // Add the cuboid to the scene
-    this.scene.add(mesh);
-    return mesh;
-}
-*/
 
 Graphics.prototype.createSphere = function( vertex )
 {
@@ -251,6 +183,7 @@ Graphics.prototype.createSphere = function( vertex )
     this.scene.add(sphere);
     return sphere;
 }
+
 
 // create a placeholder edge cylinder using the shape vertices
 // this will be replaced in Verlet, and setRod will move the cylinder to the correct world positions thereafter

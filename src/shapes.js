@@ -3,11 +3,11 @@ const cube =
 [
 	// bottom
     // first point gets full list of the face vertices
-	{ x: -1, y: 0, z: 1, staticFriction: 1.0, connected: [1,4,6],
+	{ x: -1, y: 0, z: 1, staticFriction: 0.9999, connected: [1,4,6],
         faces: [
             // bottom
-            0, 1, 2,
-            0, 2, 3,
+            0, 2, 1,
+            0, 3, 2,
             // right
             5, 1, 2,
             5, 2, 6,
@@ -25,14 +25,14 @@ const cube =
             4, 1, 5, 
         ]
     },	//0
-	{ x: 1, y: 0, z: 1, staticFriction: 1.0, connected: [2,5,7] },
-	{ x: 1, y: 0, z: -1, staticFriction: 1.0, connected: [3,6,4] },
-	{ x: -1, y: 0, z: -1, staticFriction: 1.0, connected: [0,7,5] },	//3
+	{ x: 1, y: 0, z: 1, staticFriction: 0.99999, connected: [2,5,7] },
+	{ x: 1, y: 0, z: -1, staticFriction: 0.99999, connected: [3,6,4] },
+	{ x: -1, y: 0, z: -1, staticFriction: 0.99999, connected: [0,7,5] },	//3
 	// top
-	{ x: -1, y: 12, z: 1, staticFriction: 0.5, connected: [5] },	//4
-	{ x: 1, y: 12, z: 1, staticFriction: 0.5, connected: [6] },
-	{ x: 1, y: 12, z: -1, staticFriction: 0.5, connected: [7] },
-	{ x: -1, y: 12, z: -1, staticFriction: 0.5, connected: [4] },	//7
+	{ x: -1, y: 2, z: 1, staticFriction: 0.25, connected: [5] },	//4
+	{ x: 1, y: 2, z: 1, staticFriction: 0.25, connected: [6] },
+	{ x: 1, y: 2, z: -1, staticFriction: 0.25, connected: [7] },
+	{ x: -1, y: 2, z: -1, staticFriction: 0.25, connected: [4] },	//7
 ];
 
 

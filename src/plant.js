@@ -7,21 +7,26 @@
 class Plant
 {
     static maxEnergyStore = 1024;
+    static growthMultiplier = 0.1;
+    static sizeMultiplier = 10.0;
 
 
-    constructor( shapeName, x, y, z )
+    constructor( x, y, z, energy )
     {
-        this.energy = Math.random() * (World.seedEnergyMax - World.seedEnergyMin) + World.seedEnergyMin;
+        this.energy = energy;
         this.dna = [ new Chromosone(0, "wood", "top", 0.2), new Chromosone(1, "leaf", "top", 1.0) ];
         this.stage = 0;
         this.lastUpdate = Date.now();
 
-        // create the VerletShape which represents the physics object for this plant
-        this.verletShape = new VerletShape(shapeName);
-        this.verletShape.create({ x: x, y: y, z: z });
+        // create the VerletShape which represents the physics object for the seed
+        const verletShape = new VerletShape("cube");
+        verletShape.create({ x: x, y: y, z: z });
 
         // create the graphic representation of the VerletShape
-        World.graphics.createShape(this.verletShape);
+        World.graphics.createShape(verletShape);
+
+        // start the cuboids list with the seed
+        this.cuboids = [ { verletShape:verletShape, chromosone: this.dna[0] } ];
     }
 
     update( wind )
@@ -46,11 +51,17 @@ class Plant
             this.grow(dt);
         }
 
-        // update physics, including wind-force
-        this.verletShape.update(wind);
+        // update and draw all the cuboids in this plant
+        this.cuboids.forEach((cuboid) => {
+            if (cuboid.chromosone.size > 0)
+            {
+                // update physics, including wind-force
+                cuboid.verletShape.update(wind, cuboid.chromosone.size);
 
-        // update the graphic representation to match the current physics configuration
-        World.graphics.update(this.verletShape);
+                // update the graphic representation to match the current physics configuration
+                World.graphics.update(cuboid.verletShape);
+            }
+        });
     }
 
     grow( dt )

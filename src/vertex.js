@@ -10,9 +10,9 @@ class Vertex
         this.x = x || 0;
         this.y = y || 0;
         this.z = z || 0;
-        this.oldX = this.x;
-        this.oldY = this.y;
-        this.oldZ = this.z;
+        this.oldX = undefined;
+        this.oldY = undefined;
+        this.oldZ = undefined;
         this.staticFriction = 0.0;
     }
 

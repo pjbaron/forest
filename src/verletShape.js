@@ -24,11 +24,11 @@ class VerletShape
         this.world = null;
     }
 
-    update( force )
+    update( force, size )
     {
         const friction = this.constrainToWorld();
         for(var i = 0; i < VerletShape.numIterations; i++)
-            this.constrainToShape(friction);
+            this.constrainToShape(friction, size);
         this.move(force);
         return true;
     }
@@ -95,47 +95,6 @@ class VerletShape
         }
     }
 
-    move( force )
-    {
-        // for all vertices in the shape
-        var l = this.shape.vertices.length;
-        for(var i = 0; i < l; i++)
-        {
-            var v1 = this.shape.vertices[i];
-
-            // if the vertex is locked, exit early, don't even try to move it
-            if (v1.staticFriction == 1.0)
-                continue;
-
-            // calculate simple forces on the vertex
-            var fgy = force.y + World.gravity;
-            // don't allow mag to become zero because that will cause divide by zero errors
-            var mag = Math.max(Math.sqrt(force.x * force.x + fgy * fgy + force.z * force.z), 0.001);
-            var forceMag = (1.0 - v1.staticFriction) / mag;
-            var applyForce = { x: force.x * forceMag, y: fgy * forceMag, z: force.z * forceMag };
-
-            // calculate the new vertex position, using the offset from its position last frame and the forces being applied
-            var dx = 2 * v1.x - v1.oldX + applyForce.x;
-            var dy = 2 * v1.y - v1.oldY + applyForce.y;
-            var dz = 2 * v1.z - v1.oldZ + applyForce.z;
-
-            // remember where the vertex was this frame, ready for next frame
-            v1.oldX = v1.x;
-            v1.oldY = v1.y;
-            v1.oldZ = v1.z;
-
-            // calculate the amount of movement to restore our position
-            var velx = dx;
-            var vely = dy;
-            var velz = dz;
-
-            // set the new position
-            v1.x = velx;
-            v1.y = vely;
-            v1.z = velz;
-        }
-    }
-
     constrainToWorld()
     {
         const friction = [];
@@ -156,7 +115,7 @@ class VerletShape
         return friction;
     }
 
-    constrainToShape()
+    constrainToShape( friction, size )
     {
         // for every edge in the shape
         for(var i = 0, l = this.shape.edges.length; i < l; i++)
@@ -164,8 +123,8 @@ class VerletShape
             const edge = this.shape.edges[i];
             const v1 = edge.startData.vertex;
             const v2 = edge.endData.vertex;
-            const restLength = Math.sqrt(edge.vector.l2);
-            // move both ends towards the initial edge length
+            const restLength = Math.sqrt(edge.vector.l2) * size * Plant.sizeMultiplier;
+            // move both ends to approach the edge restLength * size
             var dx = v2.x - v1.x;
             var dy = v2.y - v1.y;
             var dz = v2.z - v1.z;
@@ -175,18 +134,55 @@ class VerletShape
             var offx = dx * pcent;
             var offy = dy * pcent;
             var offz = dz * pcent;
-            if (v2.staticFriction != 1.0)
+            v1.x += offx;
+            v1.y += offy;
+            v1.z += offz;
+            v2.x -= offx;
+            v2.y -= offy;
+            v2.z -= offz;
+        }
+    }
+
+    move( force )
+    {
+        // for all vertices in the shape
+        var l = this.shape.vertices.length;
+        for(var i = 0; i < l; i++)
+        {
+            var v1 = this.shape.vertices[i];
+
+            // first time processing, it hasn't 'moved' yet
+            // (but it might have been resized which will be misinterpreted)
+            if (v1.oldX === undefined)
             {
-                v2.x -= offx;
-                v2.y -= offy;
-                v2.z -= offz;
+                v1.oldX = v1.x;
+                v1.oldY = v1.y;
+                v1.oldZ = v1.z;
             }
-            if (v1.staticFriction != 1.0)
-            {
-                v1.x += offx;
-                v1.y += offy;
-                v1.z += offz;
-            }
+
+            // calculate simple forces on the vertex
+            var friction = (1.0 - v1.staticFriction);
+            var applyForce = { x: force.x * friction, y: force.y * friction + World.gravity, z: force.z * friction };
+
+            // calculate the velocity from the motion last frame, damp it using the inverse friction
+            var velx = (v1.x - v1.oldX) * friction;
+            var vely = (v1.y - v1.oldY) * friction;
+            var velz = (v1.z - v1.oldZ) * friction;
+
+            // calculate the new vertex position, using the velocity and the force
+            var dx = v1.oldX + velx + applyForce.x;
+            var dy = v1.oldY + vely + applyForce.y;
+            var dz = v1.oldZ + velz + applyForce.z;
+
+            // remember where the vertex was this frame, ready for next frame
+            v1.oldX = v1.x;
+            v1.oldY = v1.y;
+            v1.oldZ = v1.z;
+
+            // set the new position
+            v1.x = dx;
+            v1.y = dy;
+            v1.z = dz;
         }
     }
 

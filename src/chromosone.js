@@ -35,11 +35,13 @@ class Chromosone
             {
                 // begin growth
                 this.size = 0.1;
+                console.log("begin to grow");
             }
-            else
+            else if (this.size < maxGrowth)
             {
-                // grow until max size (1.0)
-                this.size = Math.min(this.size + this.growSpeed * dt, maxGrowth);
+                // grow until max size
+                this.size = Math.min(this.size + this.growSpeed * Plant.growthMultiplier * dt, maxGrowth);
+                if (this.size == maxGrowth) console.log("fully grown");
             }
         }
 

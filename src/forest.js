@@ -2,12 +2,13 @@
 class World
 {
     // static world constants
-    static worldSize = 800;
+    static worldSize = 400;
     static worldScale = 3;
-    static gravity = -0.98;
-    static windForce = 0.3;
+    static gravity = -0.4;
+    static windForce = 0.0;
+    static velocityDamper = 0.9;
 
-    static maxPlants = 200;
+    static maxPlants = 1;
     static seedEnergyMin = 64;
     static seedEnergyMax = 256;
     static sunlightMultiplier = 1.0;        // seasonal variation and global control
@@ -45,7 +46,8 @@ class World
         {
             var x = World.worldSize * Math.random() - World.worldSize / 2;
             var z = World.worldSize * Math.random() - World.worldSize / 2;
-            var plant = new Plant("cube", x, World.groundLevel, z);
+            var energy = Math.random() * (World.seedEnergyMax - World.seedEnergyMin) + World.seedEnergyMin;Math.random() * (World.seedEnergyMax - World.seedEnergyMin) + World.seedEnergyMin
+            var plant = new Plant(x, World.groundLevel, z, energy);
             this.plants.push(plant);
         }
     }
