@@ -2,10 +2,11 @@
 
 class Control
 {
-	constructor(canvas)
+	constructor(document, canvasName)
 	{
-		Control.canvas = canvas;
-        Control.engine = new BABYLON.Engine(canvas, true);
+		Control.document = document;
+		Control.canvas = Control.document.getElementById(canvasName);
+        Control.engine = new BABYLON.Engine(Control.canvas, true);
         Control.engine.renderingCanvasRatio = null;
         Control.scene = this.createScene();
 
@@ -18,17 +19,17 @@ class Control
 
 		// resize the canvas when the window is resized
         window.addEventListener("resize", function () {
-        	canvas.width = window.innerWidth;
-        	canvas.height = window.innerHeight;
+        	Control.canvas.width = window.innerWidth;
+        	Control.canvas.height = window.innerHeight;
             Control.engine.resize();
         });
 
 		// resize the canvas when the document finishes loading
-		document.addEventListener('DOMContentLoaded', function() {
-			canvas.width = window.innerWidth;
-			canvas.height = window.innerHeight;
+		Control.document.addEventListener('DOMContentLoaded', function() {
+			Control.canvas.width = window.innerWidth;
+			Control.canvas.height = window.innerHeight;
 			Control.engine.resize();
-		});        
+		});
 
 	}
 
