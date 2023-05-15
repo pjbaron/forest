@@ -78,25 +78,31 @@ class Cubish
     }
 
 
-    createCustomMesh(scene)
+    createCustomMesh(scene, model)
     {
         // create buffer for the vertex data
         var vertexData = new BABYLON.VertexData();
 
         // create data for an irregular cube
         var normals = [];
-        var positions = this.irregularCube.positions.slice();
-        var indices = this.irregularCube.indices.slice();
+        var positions = [];
+        var indices = [];
 
-        // DEBUG: attach more cubes to make the shape more interesting
-        this.attach(positions, indices, 0, 1, 0);
-        this.attach(positions, indices, 0, 2, 0);
-        this.attach(positions, indices, 0, 3, 0);
-        this.attach(positions, indices, 1, 2, 0);
-        this.attach(positions, indices, -1, 2, 0);
-        this.attach(positions, indices, -2, 2, 0);
-        this.attach(positions, indices, 1, 2, -1);
-        this.attach(positions, indices, 1, 2, -2);
+        const mx = model.size.x / 2;
+        const mz = model.size.z / 2;
+        for(var y = 0; y < model.size.y; y++)
+        {
+            for(var x = -mx; x < mx; x++)
+            {
+                for(var z = -mz; z < mz; z++)
+                {
+                    if (model.voxels[x+mx][y][z+mz] != null)
+                    {
+                        this.attach(positions, indices, x, y, z);
+                    }
+                }
+            }
+        }
 
         // compute normals for this shape
         BABYLON.VertexData.ComputeNormals(positions, indices, normals);

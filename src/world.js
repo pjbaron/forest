@@ -10,6 +10,11 @@ class World
     static eyeLevel = 20;
     static groundLevel = 0;
 
+    static seedEnergy = 10;
+    static seedNutrients = 10;
+
+    static plantSize = { x: 8, y: 16, z: 8 };
+
 
 
     constructor()
