@@ -2,7 +2,7 @@
 class World
 {
     // static world constants
-    static gravity = -0.4;
+    static gravity = -0.02;
     static windForce = 0.0;
 
     static maxPlants = 1;
@@ -48,8 +48,8 @@ class World
         {
             // TODO: verlet, including wind and gravity
             
-            if (!this.plants[i].update())
-                this.plants.splice(i, 1);
+            if (!this.plants[i].update( wind ))
+                this.plants.splice( i, 1 );
         }
     }
 

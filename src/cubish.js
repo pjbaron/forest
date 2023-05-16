@@ -17,25 +17,25 @@ class Cubish
             0.5, 1, -0.5,
             -0.5, 1, -0.5,
         ],
-        indices :
+        indices :   // cw winding, middle value is the 90 degree corner vertex, diagonals are all implied (loop back to start)
         [
             // bottom (-y)
             0, 1, 2,
-            0, 2, 3,
+            2, 3, 0,
             // back (+z)
             0, 4, 5,
-            0, 5, 1,
+            5, 1, 0,
             // right (+x)
-            1, 5, 2,
+            2, 1, 5,
             5, 6, 2,
             // front (-z)
-            2, 6, 3,
-            3, 6, 7,
+            3, 2, 6,
+            6, 7, 3,
             // left (-x)
             3, 7, 4,
-            3, 4, 0,
+            4, 0, 3,
             // top (+y)
-            4, 6, 5,
+            6, 5, 4,
             4, 7, 6,
         ]
     }
