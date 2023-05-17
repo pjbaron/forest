@@ -2,18 +2,24 @@
 class World
 {
     // static world constants
-    static gravity = -0.02;
-    static windForce = 0.0;
 
-    static maxPlants = 1;
 
-    static eyeLevel = 20;
+    // world
+    static mapSize = 100;
+
+    // physics
+    static gravity = -0.01;
+    static windForce = 0.001;
+
+    // camera
+    static eyeLevel = 5;
     static groundLevel = 0;
 
-    static seedEnergy = 10;
-    static seedNutrients = 10;
-
-    static plantSize = { x: 8, y: 16, z: 8 };
+    // plants
+    static maxPlants = 256;
+    static seedEnergy = 16;
+    static seedNutrients = 16;
+    static plantSize = { x: 9, y: 25, z: 9 };
 
 
 
@@ -23,6 +29,7 @@ class World
 
         this.tick = 0;
         this.plants = null;
+        this.ground = null;
     }
 
 
@@ -30,6 +37,16 @@ class World
     {
         // graphics engine scene reference
         this.scene = scene;
+
+        // add a ground layer
+        const groundOptions = { width: 1000, height: 1000, subdivisions: 100 };
+        this.ground = BABYLON.MeshBuilder.CreateGround("ground", groundOptions, this.scene);
+        this.ground.setAbsolutePosition(0, World.groundLevel, 0);
+        // create a material for the ground
+        var material = new BABYLON.StandardMaterial("material", scene);
+        material.specularColor = new BABYLON.Color3(0.0, 0.0, 0.0);
+        material.diffuseColor = new BABYLON.Color3(0.05, 0.2, 0.0);
+        this.ground.material = material;
 
         // build the initial crop
         this.plants = [];
@@ -42,7 +59,11 @@ class World
 
     update()
     {
-        var wind = { x: (Math.cos(Date.now() / 29000.0) + Math.cos(Date.now() / 2300.0) + Math.cos(Date.now() / 663)) * World.windForce, y: 0, z: 0 };
+        var wind = {
+            x: (Math.cos(Date.now() / 29000.0) + Math.cos(Date.now() / 2300.0) + Math.cos(Date.now() / 663)) * World.windForce,
+            y: 0 * World.windForce,
+            z: 0 * World.windForce
+        };
 
         for(var i = 0, l = this.plants.length; i < l; i++)
         {
@@ -68,8 +89,8 @@ class World
         for(var i = 0; i < World.maxPlants; i++)
         {
             var plant = new Plant(this.scene, this.cubish);
-            plant.create();
-            this.plants.push(plant);            
+            plant.create( new BABYLON.Vector3((Math.random() - 0.5) * World.mapSize, World.groundLevel, (Math.random() - 0.5) * World.mapSize));
+            this.plants.push(plant);
         }
     }
 

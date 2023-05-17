@@ -6,13 +6,14 @@ class Verlet
     static numIterations = 5;
 
     static stiffness = 0.90;
-    static damping = 1.0 - 0.03;
+    static damping = 1.0 - 0.01;
 
 
     constructor( vertices, indices )
     {
         this.vertices = vertices;
         this.oldVertices = null;
+        this.lockedVertices = this.lockGroundVertices();
         this.edges = this.indicesToEdges(indices);
     }
 
@@ -23,6 +24,7 @@ class Verlet
         this.constrainToWorld();
         for(var i = 0; i < Verlet.numIterations; i++)
             this.constrainToShape();
+        this.constrainToWorld();
         return true;
     }
 
@@ -53,6 +55,19 @@ class Verlet
         }
 
         return edges;
+    }
+
+
+    /// set a lock for any edge vertex if it is touching the ground when the shape is created
+    lockGroundVertices()
+    {
+        var locked = [];
+        const l = this.vertices.length;
+        for(var i = 0; i < l; i += 3)
+        {
+            locked[i / 3] = (this.vertices[i + 1] == World.groundLevel);
+        }
+        return locked;
     }
 
 
@@ -89,12 +104,18 @@ class Verlet
             var offx = dx * pcent;
             var offy = dy * pcent;
             var offz = dz * pcent;
-            this.vertices[a + 0] += offx;
-            this.vertices[a + 1] += offy;
-            this.vertices[a + 2] += offz;
-            this.vertices[b + 0] -= offx;
-            this.vertices[b + 1] -= offy;
-            this.vertices[b + 2] -= offz;
+            if (!this.lockedVertices[a])
+            {
+                this.vertices[a + 0] += offx;
+                this.vertices[a + 1] += offy;
+                this.vertices[a + 2] += offz;
+            }
+            if (!this.lockedVertices[b])
+            {
+                this.vertices[b + 0] -= offx;
+                this.vertices[b + 1] -= offy;
+                this.vertices[b + 2] -= offz;
+            }
         }
     }
 
@@ -111,20 +132,23 @@ class Verlet
         const l = this.vertices.length;
         for(var i = 0; i < l; i += 3)
         {
-            // calculate velocity from the motion last frame and the forces
-            const velx = (this.vertices[i + 0] - this.oldVertices[i + 0]) * Verlet.damping + applyForce.x;
-            const vely = (this.vertices[i + 1] - this.oldVertices[i + 1]) * Verlet.damping + applyForce.y;
-            const velz = (this.vertices[i + 2] - this.oldVertices[i + 2]) * Verlet.damping + applyForce.z;
+            if (!this.lockedVertices[i / 3])
+            {
+                // calculate velocity from the motion last frame and the forces
+                const velx = (this.vertices[i + 0] - this.oldVertices[i + 0]) * Verlet.damping + applyForce.x;
+                const vely = (this.vertices[i + 1] - this.oldVertices[i + 1]) * Verlet.damping + applyForce.y;
+                const velz = (this.vertices[i + 2] - this.oldVertices[i + 2]) * Verlet.damping + applyForce.z;
 
-            // calculate the new vertex position, using the velocity
-            const nx = this.vertices[i + 0] + velx;
-            const ny = this.vertices[i + 1] + vely;
-            const nz = this.vertices[i + 2] + velz;
+                // calculate the new vertex position, using the velocity
+                const nx = this.vertices[i + 0] + velx;
+                const ny = this.vertices[i + 1] + vely;
+                const nz = this.vertices[i + 2] + velz;
 
-            // set the new position
-            this.vertices[i + 0] = nx;
-            this.vertices[i + 1] = ny;
-            this.vertices[i + 2] = nz;
+                // set the new position
+                this.vertices[i + 0] = nx;
+                this.vertices[i + 1] = ny;
+                this.vertices[i + 2] = nz;
+            }
         }
 
         this.oldVertices = memVertices;

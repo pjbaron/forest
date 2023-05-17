@@ -2,6 +2,7 @@
 
 class Control
 {
+
 	constructor(document, canvasName)
 	{
 		Control.document = document;
@@ -30,8 +31,8 @@ class Control
 			Control.canvas.height = window.innerHeight;
 			Control.engine.resize();
 		});
-
 	}
+
 
     createScene()
     {
@@ -39,13 +40,14 @@ class Control
         var scene = new BABYLON.Scene(Control.engine);
 
         // Create a camera and attach it to the scene
-        Control.camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(0, 3, -10), scene);
+        Control.camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(0, World.eyeLevel, -World.mapSize * 0.75), scene);
         Control.camera.attachControl(Control.canvas, true);
+        Control.camera.rotation = new BABYLON.Vector3(10 * Math.PI / 180, 0, 0);
         Control.camera.inertia = 0;
         Control.camera.speed = 1.0;
 
         // Create lights and attach to the scene
-        const light = new BABYLON.PointLight("light", new BABYLON.Vector3(0, 10, 0), scene);
+        const light = new BABYLON.PointLight("light", new BABYLON.Vector3(0, 50, 0), scene);
         light.intensity = 1.0;
 
         const ambient = new BABYLON.HemisphericLight("HemiLight", new BABYLON.Vector3(0, 1, 0), scene);

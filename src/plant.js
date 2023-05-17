@@ -16,7 +16,7 @@ class Plant
     }
 
 
-    create()
+    create( worldPosition )
     {
         this.model = new Model();
         this.model.create();
@@ -30,6 +30,7 @@ class Plant
         this.mesh = this.cubish.createCustomMesh(this.scene, this.model);
         this.vertices = this.mesh.getVerticesData(BABYLON.VertexBuffer.PositionKind);
         this.indices = this.mesh.getIndices();
+        this.mesh.setAbsolutePosition( worldPosition );
         this.verlet = new Verlet( this.vertices, this.indices );
     }
 
