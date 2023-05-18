@@ -16,7 +16,7 @@ class World
     static groundLevel = 0;
 
     // plants
-    static maxPlants = 256;
+    static maxPlants = 16;
     static seedEnergy = 16;
     static seedNutrients = 16;
     static plantSize = { x: 9, y: 25, z: 9 };
