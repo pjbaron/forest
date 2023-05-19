@@ -34,11 +34,13 @@ class Plant
         this.mesh.setAbsolutePosition( worldPosition );
         this.verlet = new Verlet( this.vertices, this.indices );
 
+        // find all the leaves (triangles which have a normal with y >= 0)
         this.leaves = this.findLeaves();
-        // TODO: raytrace from leaves to see if they have space and sky
 
-        // DEBUG only...
-        this.showLightLevels();
+        // calculate the amount of light landing on each triangle
+        this.lightAmount();
+
+        //this.debugLightLevels();
     }
 
 
@@ -71,9 +73,10 @@ class Plant
 
             // if the surface normal is up or out from the seed location (centre of the model) include this triangle
             const normal = this.calcNormal(v0, v1, v2);
+            const pos = v0.add(v1).add(v2).scale(1/3);
             if (normal.y >= 0)
             {
-                leaves.push( { i0: i0, i1: i1, i2: i2, v0: v0, v1: v1, v2: v2, normal: normal });
+                leaves.push( { i0: i0, i1: i1, i2: i2, v0: v0, v1: v1, v2: v2, position: pos, normal: normal });
             }
         }
         return leaves;
@@ -86,15 +89,30 @@ class Plant
     }
 
 
-    showLightLevels()
+    lightAmount()
+    {
+        const l = this.leaves.length;
+        //const raycastResult = new BABYLON.PhysicsRaycastResult();
+        for(var i = 0; i < l; i++)
+        {
+            const leaf = this.leaves[i];
+            // raycast from leaf (plus a small offset along the normal) towards the sun, detect if we can see it (direct sunlight)
+
+            const start = leaf.position.add(leaf.normal.scale(5.0))
+            // if not, raytrace along the normal and check if the ray hits the skybox first (indirect sunlight)
+            // otherwise use ambient light
+        }
+    }
+
+
+    debugLightLevels()
     {
         const l = this.leaves.length;
         for(var i = 0; i < l; i++)
         {
             const leaf = this.leaves[i];
-            const pos = leaf.v0.add(leaf.v1).add(leaf.v2).scale(1.0/3.0);
-            const sphere = BABYLON.MeshBuilder.CreateSphere("sphere", { diameter: leaf.normal.y / 2.0 + 0.1 }, this.scene);
-            sphere.setAbsolutePosition(pos.add(this.mesh.position));
+            const sphere = BABYLON.MeshBuilder.CreateSphere("sphere", { diameter: (leaf.normal.y + 0.25) / 2.0 }, this.scene);
+            sphere.setAbsolutePosition(leaf.position.add(this.mesh.position));
         }
     }
 
