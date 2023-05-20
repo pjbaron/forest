@@ -8,6 +8,8 @@ class Plant
         this.scene = scene;
         this.cubish = cubish;
 
+        this.physEngine = null;
+
         this.model = null;
         this.mesh = null;
         this.vertices = null;
@@ -19,6 +21,7 @@ class Plant
 
     create( worldPosition )
     {
+        // build a 'plant' model
         this.model = new Model();
         this.model.create();
         this.model.add({x: 0, y: 1, z: 0});
@@ -28,11 +31,19 @@ class Plant
         this.model.add({x: -1, y: 1, z: 0});
         this.model.add({x: 0, y: 2, z: -1});
         this.model.add({x: 0, y: 2, z: 1});
+
+        // convert it to a custom mesh
         this.mesh = this.cubish.createCustomMesh(this.scene, this.model);
+        this.mesh.setAbsolutePosition( worldPosition );
+        this.mesh.checkCollisions = true;
+
+        // data references, then build the verlet representation for soft-body physics
         this.vertices = this.mesh.getVerticesData(BABYLON.VertexBuffer.PositionKind);
         this.indices = this.mesh.getIndices();
-        this.mesh.setAbsolutePosition( worldPosition );
         this.verlet = new Verlet( this.vertices, this.indices );
+
+        // BabylonJS physics engine, for raycast collision checks
+        this.physEngine = this.scene.getPhysicsEngine();
 
         // find all the leaves (triangles which have a normal with y >= 0)
         this.leaves = this.findLeaves();
@@ -59,6 +70,7 @@ class Plant
     findLeaves()
     {
         const leaves = [];
+        
         // iterate all indices in trios to obtain the triangles
         const l = this.indices.length;
         for(var i = 0; i < l; i += 3)
@@ -76,7 +88,7 @@ class Plant
             const pos = v0.add(v1).add(v2).scale(1/3);
             if (normal.y >= 0)
             {
-                leaves.push( { i0: i0, i1: i1, i2: i2, v0: v0, v1: v1, v2: v2, position: pos, normal: normal });
+                leaves.push( { i0: i0, i1: i1, i2: i2, v0: v0, v1: v1, v2: v2, position: pos, normal: normal, light: 0.0 });
             }
         }
         return leaves;
@@ -91,16 +103,38 @@ class Plant
 
     lightAmount()
     {
+        const raycastResult = new BABYLON.PhysicsRaycastResult();
+        const sunPos = Control.world.sun.position;
+
         const l = this.leaves.length;
-        //const raycastResult = new BABYLON.PhysicsRaycastResult();
         for(var i = 0; i < l; i++)
         {
             const leaf = this.leaves[i];
             // raycast from leaf (plus a small offset along the normal) towards the sun, detect if we can see it (direct sunlight)
-
-            const start = leaf.position.add(leaf.normal.scale(5.0))
-            // if not, raytrace along the normal and check if the ray hits the skybox first (indirect sunlight)
-            // otherwise use ambient light
+            const start = leaf.position.add(leaf.normal.scale(1.5));
+            this.physEngine.raycastToRef(start, sunPos, raycastResult);
+            // hit something before reaching the sun... we can't see it
+            if (raycastResult.hasHit)
+            {
+                // raytrace along the normal and check if the ray can extend a decent distance
+                this.physEngine.raycastToRef(start, start.add(leaf.normal.scale(20)));
+                if (raycastResult.hasHit)
+                {
+                    // otherwise use ambient light
+                    leaf.light += Control.world.ambient.intensity;
+                    console.log("ambient " + leaf.light);
+                }
+                else
+                {
+                    leaf.light += Control.world.ambient.intensity + Control.world.sun.intensity * Control.indirectLightPercent;
+                    console.log("indirect " + leaf.light);
+                }
+            }
+            else
+            {
+                leaf.light = Control.world.ambient.intensity + Control.world.sun.intensity;
+                //console.log("direct " + leaf.light);
+            }
         }
     }
 

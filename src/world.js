@@ -2,7 +2,7 @@
 class World
 {
     // static world constants
-
+    static Instance = null;
 
     // world
     static mapSize = 100;
@@ -11,12 +11,16 @@ class World
     static gravity = -0.01;
     static windForce = 0.001;
 
+    // light
+    static indirectLightPercent = 0.5;  // pcent of direct sunlight which arrives indirectly
+
     // camera
     static eyeLevel = 5;
     static groundLevel = 0;
+    static cameraSpeed = 0.1;
 
     // plants
-    static maxPlants = 16;
+    static maxPlants = 128;
     static seedEnergy = 16;
     static seedNutrients = 16;
     static plantSize = { x: 9, y: 25, z: 9 };
@@ -38,6 +42,8 @@ class World
 
         this.skyMaterial = null;
         this.skyBox = null;
+
+        this.physEngine = null;
 
         this.time = 12.00;
     }
@@ -132,6 +138,40 @@ class World
         this.camera.inertia = 0;
         this.camera.speed = 1.0;
 
+        // Modify camera's keyboard controls
+        const dsm = new BABYLON.DeviceSourceManager(scene.getEngine());
+        dsm.onDeviceConnectedObservable.add((eventData) => {
+            if (eventData.deviceType === BABYLON.DeviceType.Keyboard) {
+                const keyboard = dsm.getDeviceSource(BABYLON.DeviceType.Keyboard);        
+                scene.beforeRender = () => {
+                    const w = keyboard.getInput(87);
+                    const a = keyboard.getInput(65);
+                    const s = keyboard.getInput(83);
+                    const d = keyboard.getInput(68);
+                    const e = keyboard.getInput(69);
+                    const q = keyboard.getInput(81);
+                    if (w === 1) {
+                        this.camera.position.addInPlace(this.camera.getDirection(BABYLON.Vector3.Forward().scale(World.cameraSpeed)));
+                    }
+                    if (s === 1) {
+                        this.camera.position.addInPlace(this.camera.getDirection(BABYLON.Vector3.Backward().scale(World.cameraSpeed)));
+                    }
+                    if (a === 1) {
+                        this.camera.position.addInPlace(this.camera.getDirection(BABYLON.Vector3.Left().scale(World.cameraSpeed)));
+                    }
+                    if (d === 1) {
+                        this.camera.position.addInPlace(this.camera.getDirection(BABYLON.Vector3.Right().scale(World.cameraSpeed)));
+                    }
+                    if (e === 1) {
+                        this.camera.position.addInPlace(this.camera.getDirection(BABYLON.Vector3.Up().scale(World.cameraSpeed)));
+                    }
+                    if (q === 1) {
+                        this.camera.position.addInPlace(this.camera.getDirection(BABYLON.Vector3.Down().scale(World.cameraSpeed)));
+                    }
+                };
+            }
+        });
+
         //const envTex = BABYLON.CubeTexture.CreateFromPrefilteredData('https://assets.babylonjs.com/environments/environmentSpecular.env', scene);
         this.skyMaterial = new BABYLON.SkyMaterial("skyMaterial", scene);
         this.skyMaterial.backFaceCulling = false;
@@ -152,6 +192,10 @@ class World
 
         // Create the shadow generator
         this.shadowGenerator = new BABYLON.ShadowGenerator(4096, this.sun);
+
+        // Enable Physics for raycasting
+        scene.enablePhysics(new BABYLON.Vector3(0, -9.81, 0), new BABYLON.CannonJSPlugin());
+        this.physEngine = scene.getPhysicsEngine();
 
         return scene;
     }
