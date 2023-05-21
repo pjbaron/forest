@@ -26,7 +26,7 @@ class World
     static seedEnergy = 16;
     static seedNutrients = 16;
     static plantSize = { x: 9, y: 25, z: 9 };
-    static costOfLiving = 0.01;
+    static costOfLiving = 0.005;
 
 
 
@@ -45,8 +45,6 @@ class World
 
         this.skyMaterial = null;
         this.skyBox = null;
-
-        this.physEngine = null;
 
         this.time = 12.00;
     }
@@ -100,11 +98,11 @@ class World
         const l = this.plants.length;
         for(var i = 0; i < l; i++)
         {
-            // TODO: verlet, including wind and gravity
-            
-            if (!this.plants[i].update( wind, i ))
+            const plant = this.plants[i];
+            if (!plant.update( wind, i ))
             {
-                console.log("plant " + this.plants[i].mesh.name + " died at " + this.time + ", leaving [" + (this.plants.length - 1) + "]");
+                console.log(this.time + ": " + plant.mesh.name + " died, leaving [" + (this.plants.length - 1) + "]");
+                plant.destroy();
                 this.plants.splice( i, 1 );
             }
         }
@@ -113,6 +111,8 @@ class World
 
     timeOfDay()
     {
+        // TODO: add moonlight
+
         // advance time of day
         this.time = (this.time + 1/60 * 0.1) % 24.0;  // 6 seconds per tick
 
@@ -124,13 +124,12 @@ class World
         this.sun.position.z = 0;                    // TODO: seasonal variation here
         this.sun.setDirectionToTarget(BABYLON.Vector3.Zero());
 
+        // update the visual 'sun' in the sky material
         this.skyMaterial.sunPosition = this.sun.position;
 
         // dimmer when crossing the horizon, off when below the horizon
-        this.sun.intensity = Math.min(Math.max(0, (this.sun.position.y + 100.0) / 250.0), 1.0);
-
-        // TODO: add moonlight
-        this.ambient.intensity = Math.min(Math.max(0.1, (this.sun.position.y + 50.0) / 150.0), 1.0);
+        this.sun.intensity = Math.min(Math.max(0, (this.sun.position.y + World.sunHeight * 0.25) / World.sunHeight), 1.0);
+        this.ambient.intensity = Math.min(Math.max(0.1, (this.sun.position.y + World.sunHeight * 0.125) / World.sunHeight), 1.0);
     }
 
 
@@ -170,11 +169,6 @@ class World
 
         // Create the shadow generator
         this.shadowGenerator = new BABYLON.ShadowGenerator(4096, this.sun);
-
-        // Enable Physics for raycasting
-        scene.enablePhysics(new BABYLON.Vector3(0, -9.81, 0), new BABYLON.CannonJSPlugin());
-        scene.checkCollisions = true;
-        this.physEngine = scene.getPhysicsEngine();
 
         return scene;
     }

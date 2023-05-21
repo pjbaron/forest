@@ -6,8 +6,6 @@ class Plant
         this.scene = scene;
         this.cubish = cubish;
 
-        this.physEngine = null;
-
         this.model = null;
         this.mesh = null;
         this.vertices = null;
@@ -22,9 +20,6 @@ class Plant
 
     create( worldPosition )
     {
-        // reference to BabylonJS physics engine, for raycast collision checks
-        this.physEngine = this.scene.getPhysicsEngine();
-
         // build a 'plant' model
         this.model = new Model();
         this.model.create();
@@ -51,7 +46,20 @@ class Plant
 
         // initialise plant variables
         this.totalEnergy = 0;
+        // TODO: should vary depending on plant status as well as size (hibernate at night, growth speed...)
         this.costOfLiving = World.costOfLiving * this.leaves.length;
+    }
+
+
+    destroy()
+    {
+        if (this.mesh) this.mesh.dispose();
+        this.model = null;
+        this.vertices = null;
+        this.indices = null;
+        this.verlet = null;
+        this.leaves = null;
+
     }
 
 
@@ -68,7 +76,7 @@ class Plant
     /// return false if the plant dies
     update( force, plantIndex )
     {
-        // TODO: debug only
+        // lazy recalculation of light, one plant per frame
         if (plantIndex == (Math.floor(Control.world.tick % Control.world.plants.length)))
             this.lightAmount();
 
@@ -78,7 +86,7 @@ class Plant
         this.verlet.update( force );
         this.mesh.updateVerticesData(BABYLON.VertexBuffer.PositionKind, this.vertices);
 
-        // TODO: include elapsed time?
+        // TODO: include elapsed real-time?
         this.totalEnergy += this.totalLight;
         this.totalEnergy -= this.costOfLiving;
 
@@ -106,7 +114,7 @@ class Plant
             // if the surface normal is up or out from the seed location (centre of the model) include this triangle
             const normal = this.calcNormal(v0, v1, v2);
             const pos = v0.add(v1).add(v2).scale(1/3);
-            if (normal.y >= 0)
+            if (normal.y >= -0.1)
             {
                 leaves.push( { i0: i0, i1: i1, i2: i2, v0: v0, v1: v1, v2: v2, position: pos, normal: normal, light: 0.0, debug: {} });
             }
@@ -143,13 +151,16 @@ class Plant
             ray.length = 100;
 
             // does ray hit something on the way toward the sun? (in shadow)
-            var hitInfo = this.scene.pickWithRay(ray);
+            // Ray, predicate(mesh) => bool, fastCheck (bool), trianglePredicate
+            var hitInfo = this.scene.pickWithRay(ray, null, true, null);
             if (hitInfo.hit)
             {
+                ambient++;
+                /* TODO: test, tracking the slow-down at night
                 // raytrace along the normal and check if the ray can extend a decent distance
                 ray.direction = leaf.normal;
                 ray.length = 10;
-                hitInfo = this.scene.pickWithRay(ray);
+                hitInfo = this.scene.pickWithRay(ray, null, true, null);
                 if (hitInfo.hit)
                 {
                     // ambient light received
@@ -160,6 +171,7 @@ class Plant
                     // indirect sunlight received
                     indirect++;
                 }
+                */
             }
             else
             {
@@ -173,7 +185,7 @@ class Plant
         this.totalLight += indirect * (Control.world.ambient.intensity + Control.world.sun.intensity * World.indirectLightPercent);
         this.totalLight += direct * (Control.world.ambient.intensity + Control.world.sun.intensity);
         this.totalLight *= World.lightEnergyScaler;
-        //console.log("plant " + this.mesh.name + " receiving " + this.totalLight + " " + ambient + " " + indirect + " " + direct);
+        console.log(Math.floor(Control.world.time * 100) / 100 + ": " + this.mesh.name + "[" + Math.round(this.totalEnergy) + "] receiving " + this.totalLight + " " + ambient + " " + indirect + " " + direct);
     }
 
 

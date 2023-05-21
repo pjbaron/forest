@@ -120,7 +120,7 @@ class Cubish
         material.diffuseColor = new BABYLON.Color3(0, 1, 0);
 
         // create a new custom mesh
-        var mesh = new BABYLON.Mesh("plantMesh" + Cubish.id++, scene);
+        var mesh = new BABYLON.Mesh("plant" + Cubish.id++, scene);
         mesh.material = material;
 
         // apply the vertex data to the new mesh
