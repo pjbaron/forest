@@ -14,6 +14,7 @@ class World
     // light
     static sunHeight = 256.0;
     static indirectLightPercent = 0.5;  // pcent of direct sunlight which arrives indirectly
+    static lightEnergyScaler = 0.01;    // the default plant receives ~125 light per tick, scale it down by this
 
     // camera
     static eyeLevel = 5;
@@ -25,6 +26,7 @@ class World
     static seedEnergy = 16;
     static seedNutrients = 16;
     static plantSize = { x: 9, y: 25, z: 9 };
+    static costOfLiving = 0.01;
 
 
 
@@ -101,7 +103,10 @@ class World
             // TODO: verlet, including wind and gravity
             
             if (!this.plants[i].update( wind, i ))
+            {
+                console.log("plant " + this.plants[i].mesh.name + " died at " + this.time + ", leaving [" + (this.plants.length - 1) + "]");
                 this.plants.splice( i, 1 );
+            }
         }
     }
 
