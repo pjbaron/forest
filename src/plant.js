@@ -186,6 +186,10 @@ const lm = new BABYLON.StandardMaterial("material", this.scene);
 lm.specularColor = new BABYLON.Color3(0.3, 0.3, 0.3);
 lm.diffuseColor = new BABYLON.Color3(1, 1, 1);
 
+        var ambient = 0;
+        var direct = 0;
+        var indirect = 0;
+
         const l = this.leaves.length;
         for(var i = 0; i < l; i++)
         {
@@ -230,23 +234,25 @@ if (leaf.normal.y > 0.8)
                 if (hitInfo.hit)
                 {
                     // ambient light received
-                    leaf.light += Control.world.ambient.intensity;
-                    //console.log("ambient " + leaf.light);
+                    ambient++;
                 }
                 else
                 {
                     // indirect sunlight received
-                    leaf.light += Control.world.ambient.intensity + Control.world.sun.intensity * World.indirectLightPercent;
-                    console.log("indirect " + leaf.light);
+                    indirect++;
                 }
             }
             else
             {
                 // direct sunlight received
-                leaf.light += Control.world.ambient.intensity + Control.world.sun.intensity;
-                console.log("direct " + leaf.light);
+                direct++;
             }
         }
+
+        var totalLight = ambient * (Control.world.ambient.intensity);
+        totalLight += indirect * (Control.world.ambient.intensity + Control.world.sun.intensity * World.indirectLightPercent);
+        totalLight += direct * (Control.world.ambient.intensity + Control.world.sun.intensity);
+        print("plant receiving " + totalLight + " " + ambient + " " + indirect + " " + direct);
     }
 
 
