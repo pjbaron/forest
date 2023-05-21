@@ -192,7 +192,7 @@ lm.diffuseColor = new BABYLON.Color3(1, 1, 1);
             const leaf = this.leaves[i];
 
             // raycast from leaf (plus a small offset along the normal) towards the sun, detect collisions (shadow casters)
-            const start = leaf.position.add(leaf.normal.scale(15)).add(plantPos);
+            const start = leaf.position.add(leaf.normal.scale(0.25)).add(plantPos);
             ray.origin = start;
             ray.direction = sunPos.subtract(start).normalize();
             ray.length = 20;
@@ -222,7 +222,7 @@ if (leaf.normal.y > 0.8)
             // hit something before reaching the sun... we can't see it
             if (hitInfo.hit)
             {
-                console.log(hitInfo.pickedMesh.name);
+                //console.log(hitInfo.pickedMesh.name);
 
                 // raytrace along the normal and check if the ray can extend a decent distance
                 ray.direction = leaf.normal;
@@ -243,8 +243,8 @@ if (leaf.normal.y > 0.8)
             else
             {
                 // direct sunlight received
-                leaf.light = Control.world.ambient.intensity + Control.world.sun.intensity;
-                //console.log("direct " + leaf.light);
+                leaf.light += Control.world.ambient.intensity + Control.world.sun.intensity;
+                console.log("direct " + leaf.light);
             }
         }
     }
