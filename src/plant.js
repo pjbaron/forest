@@ -192,17 +192,18 @@ lm.diffuseColor = new BABYLON.Color3(1, 1, 1);
             const leaf = this.leaves[i];
 
             // raycast from leaf (plus a small offset along the normal) towards the sun, detect collisions (shadow casters)
-            const start = leaf.position.add(leaf.normal.scale(0.25)).add(plantPos);
+            const start = leaf.position.add(leaf.normal.scale(15)).add(plantPos);
             ray.origin = start;
             ray.direction = sunPos.subtract(start).normalize();
+            ray.length = 20;
 
-
+/*
 // TODO: debug only - draw ray lines from nearly flat up-facing surfaces
 if (leaf.normal.y > 0.8)
 {
     if (!leaf.debug.points)
     {
-        leaf.debug.points = [start, Control.world.sun.position];
+        leaf.debug.points = [start, start.add(ray.direction.scale(ray.length))];
         leaf.debug.options = { points: leaf.debug.points, updatable: true };
         const lineMesh = BABYLON.MeshBuilder.CreateLines("rayLine", leaf.debug.options, this.scene);
         lineMesh.material = lm;
@@ -211,16 +212,17 @@ if (leaf.normal.y > 0.8)
     else
     {
         leaf.debug.points[0] = start;
-        leaf.debug.points[1] = Control.world.sun.position;
+        leaf.debug.points[1] = start.add(ray.direction.scale(ray.length));
         BABYLON.MeshBuilder.CreateLines("rayLine", leaf.debug.options, this.scene);
     }
 }
-
+*/
             var hitInfo = this.scene.pickWithRay(ray);
 
             // hit something before reaching the sun... we can't see it
             if (hitInfo.hit)
             {
+                console.log(hitInfo.pickedMesh.name);
 
                 // raytrace along the normal and check if the ray can extend a decent distance
                 ray.direction = leaf.normal;
@@ -229,12 +231,12 @@ if (leaf.normal.y > 0.8)
                 {
                     // ambient light received
                     leaf.light += Control.world.ambient.intensity;
-                    console.log("ambient " + leaf.light);
+                    //console.log("ambient " + leaf.light);
                 }
                 else
                 {
                     // indirect sunlight received
-                    leaf.light += Control.world.ambient.intensity + Control.world.sun.intensity * Control.indirectLightPercent;
+                    leaf.light += Control.world.ambient.intensity + Control.world.sun.intensity * World.indirectLightPercent;
                     console.log("indirect " + leaf.light);
                 }
             }
@@ -242,7 +244,7 @@ if (leaf.normal.y > 0.8)
             {
                 // direct sunlight received
                 leaf.light = Control.world.ambient.intensity + Control.world.sun.intensity;
-                console.log("direct " + leaf.light);
+                //console.log("direct " + leaf.light);
             }
         }
     }
