@@ -185,7 +185,7 @@ class Plant
         this.totalLight += indirect * (Control.world.ambient.intensity + Control.world.sun.intensity * World.indirectLightPercent);
         this.totalLight += direct * (Control.world.ambient.intensity + Control.world.sun.intensity);
         this.totalLight *= World.lightEnergyScaler;
-        console.log(Math.floor(Control.world.time * 100) / 100 + ": " + this.mesh.name + "[" + Math.round(this.totalEnergy) + "] receiving " + this.totalLight + " " + ambient + " " + indirect + " " + direct);
+        //console.log(Math.floor(Control.world.time * 100) / 100 + ": " + this.mesh.name + "[" + Math.round(this.totalEnergy) + "] receiving " + this.totalLight + " " + ambient + " " + indirect + " " + direct);
     }
 
 
