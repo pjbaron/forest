@@ -1,6 +1,4 @@
 
-
-
 class Plant
 {
     constructor( scene, cubish )
@@ -21,6 +19,9 @@ class Plant
 
     create( worldPosition )
     {
+        // reference to BabylonJS physics engine, for raycast collision checks
+        this.physEngine = this.scene.getPhysicsEngine();
+
         // build a 'plant' model
         this.model = new Model();
         this.model.create();
@@ -42,12 +43,14 @@ class Plant
         this.indices = this.mesh.getIndices();
         this.verlet = new Verlet( this.vertices, this.indices );
 
-        // BabylonJS physics engine, for raycast collision checks
-        this.physEngine = this.scene.getPhysicsEngine();
-
         // find all the leaves (triangles which have a normal with y >= 0)
         this.leaves = this.findLeaves();
+    }
 
+
+    /// prepare this plant for update, once per plant *after* all plants are created
+    prepare()
+    {
         // calculate the amount of light landing on each triangle
         this.lightAmount();
 
@@ -56,8 +59,14 @@ class Plant
 
 
     /// return false if the plant dies
-    update( force )
+    update( force, plantIndex )
     {
+        // TODO: debug only
+        if (plantIndex == 0)
+            this.lightAmount();
+
+        // TODO: use plantIndex to time-slice intensive calculations (e.g. light received)
+        // plantIndex is not fixed for a given plant - the plant list is mutable
 
         this.verlet.update( force );
         this.mesh.updateVerticesData(BABYLON.VertexBuffer.PositionKind, this.vertices);
@@ -88,7 +97,7 @@ class Plant
             const pos = v0.add(v1).add(v2).scale(1/3);
             if (normal.y >= 0)
             {
-                leaves.push( { i0: i0, i1: i1, i2: i2, v0: v0, v1: v1, v2: v2, position: pos, normal: normal, light: 0.0 });
+                leaves.push( { i0: i0, i1: i1, i2: i2, v0: v0, v1: v1, v2: v2, position: pos, normal: normal, light: 0.0, debug: {} });
             }
         }
         return leaves;
@@ -100,40 +109,140 @@ class Plant
         return v0.subtract(v1).cross(v2.subtract(v1));
     }
 
-
-    lightAmount()
+/*
+    lightAmountPhysics()
     {
-        const raycastResult = new BABYLON.PhysicsRaycastResult();
         const sunPos = Control.world.sun.position;
+        const plantPos = this.mesh.position;
+        const raycastResult = new BABYLON.PhysicsRaycastResult();
+
+const lm = new BABYLON.StandardMaterial("material", this.scene);
+lm.specularColor = new BABYLON.Color3(0.3, 0.3, 0.3);
+lm.diffuseColor = new BABYLON.Color3(1, 1, 1);
 
         const l = this.leaves.length;
         for(var i = 0; i < l; i++)
         {
             const leaf = this.leaves[i];
             // raycast from leaf (plus a small offset along the normal) towards the sun, detect if we can see it (direct sunlight)
-            const start = leaf.position.add(leaf.normal.scale(1.5));
+            const start = leaf.position.add(leaf.normal.scale(-1.25)).add(plantPos);
             this.physEngine.raycastToRef(start, sunPos, raycastResult);
+
+// TODO: debug only - draw ray lines from nearly flat up-facing surfaces
+if (leaf.normal.y > 0.8)
+{
+    if (!leaf.debug.points)
+    {
+        leaf.debug.points = [start, Control.world.sun.position];
+        leaf.debug.options = { points: leaf.debug.points, updatable: true };
+        const lineMesh = BABYLON.MeshBuilder.CreateLines("rayLine", leaf.debug.options, this.scene);
+        lineMesh.material = lm;
+        leaf.debug.options.instance = lineMesh;
+    }
+    else
+    {
+        leaf.debug.points[0] = start;
+        leaf.debug.points[1] = Control.world.sun.position;
+        BABYLON.MeshBuilder.CreateLines("rayLine", leaf.debug.options, this.scene);
+    }
+}
+
             // hit something before reaching the sun... we can't see it
             if (raycastResult.hasHit)
             {
                 // raytrace along the normal and check if the ray can extend a decent distance
-                this.physEngine.raycastToRef(start, start.add(leaf.normal.scale(20)));
+                const end = start.add(leaf.normal.scale(20)).add(plantPos);
+                this.physEngine.raycastToRef(start, end);
                 if (raycastResult.hasHit)
                 {
-                    // otherwise use ambient light
+                    // ambient light received
                     leaf.light += Control.world.ambient.intensity;
                     console.log("ambient " + leaf.light);
                 }
                 else
                 {
+                    // indirect sunlight received
                     leaf.light += Control.world.ambient.intensity + Control.world.sun.intensity * Control.indirectLightPercent;
                     console.log("indirect " + leaf.light);
                 }
             }
             else
             {
+                // direct sunlight received
                 leaf.light = Control.world.ambient.intensity + Control.world.sun.intensity;
                 //console.log("direct " + leaf.light);
+            }
+        }
+    }
+*/
+
+    lightAmount()
+    {
+        const sunPos = Control.world.sun.position;
+        const plantPos = this.mesh.position;
+        const ray = new BABYLON.Ray(BABYLON.Vector3.Zero(), BABYLON.Vector3.Up());
+
+const lm = new BABYLON.StandardMaterial("material", this.scene);
+lm.specularColor = new BABYLON.Color3(0.3, 0.3, 0.3);
+lm.diffuseColor = new BABYLON.Color3(1, 1, 1);
+
+        const l = this.leaves.length;
+        for(var i = 0; i < l; i++)
+        {
+            const leaf = this.leaves[i];
+
+            // raycast from leaf (plus a small offset along the normal) towards the sun, detect collisions (shadow casters)
+            const start = leaf.position.add(leaf.normal.scale(0.25)).add(plantPos);
+            ray.origin = start;
+            ray.direction = sunPos.subtract(start).normalize();
+
+
+// TODO: debug only - draw ray lines from nearly flat up-facing surfaces
+if (leaf.normal.y > 0.8)
+{
+    if (!leaf.debug.points)
+    {
+        leaf.debug.points = [start, Control.world.sun.position];
+        leaf.debug.options = { points: leaf.debug.points, updatable: true };
+        const lineMesh = BABYLON.MeshBuilder.CreateLines("rayLine", leaf.debug.options, this.scene);
+        lineMesh.material = lm;
+        leaf.debug.options.instance = lineMesh;
+    }
+    else
+    {
+        leaf.debug.points[0] = start;
+        leaf.debug.points[1] = Control.world.sun.position;
+        BABYLON.MeshBuilder.CreateLines("rayLine", leaf.debug.options, this.scene);
+    }
+}
+
+            var hitInfo = this.scene.pickWithRay(ray);
+
+            // hit something before reaching the sun... we can't see it
+            if (hitInfo.hit)
+            {
+
+                // raytrace along the normal and check if the ray can extend a decent distance
+                ray.direction = leaf.normal;
+                hitInfo = this.scene.pickWithRay(ray);
+                if (hitInfo.hit)
+                {
+                    // ambient light received
+                    leaf.light += Control.world.ambient.intensity;
+                    console.log("ambient " + leaf.light);
+                }
+                else
+                {
+                    // indirect sunlight received
+                    leaf.light += Control.world.ambient.intensity + Control.world.sun.intensity * Control.indirectLightPercent;
+                    console.log("indirect " + leaf.light);
+                }
+            }
+            else
+            {
+                // direct sunlight received
+                leaf.light = Control.world.ambient.intensity + Control.world.sun.intensity;
+                console.log("direct " + leaf.light);
             }
         }
     }
