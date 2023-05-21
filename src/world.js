@@ -56,7 +56,7 @@ class World
         this.scene = this.createScene();
 
         // add a ground layer
-        const groundOptions = { width: 1000, height: 1000, subdivisions: 100 };
+        const groundOptions = { width: 1000, height: 1000, subdivisions: 10 };
         this.ground = BABYLON.MeshBuilder.CreateGround("ground", groundOptions, this.scene);
         this.ground.setAbsolutePosition(0, World.groundLevel, 0);
         // create a material for the ground
