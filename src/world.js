@@ -9,7 +9,7 @@ class World
 
     // physics
     static gravity = -0.01;
-    static windForce = 0.001;
+    static windForce = 0.5;
 
     // light
     static sunHeight = 256.0;
@@ -20,13 +20,14 @@ class World
     static eyeLevel = 5;
     static groundLevel = 0;
     static cameraSpeed = 0.1;
+    static boostSpeed = 0.1;
 
     // plants
-    static maxPlants = 1;
+    static maxPlants = 128;
     static seedEnergy = 16;
     static seedNutrients = 16;
     static plantSize = { x: 9, y: 25, z: 9 };
-    static costOfLiving = 0.005;
+    static costOfLiving = 0.004;
 
 
 
@@ -90,13 +91,13 @@ class World
         this.timeOfDay();
 
         var wind = {
-            x: (Math.cos(Date.now() / 29000.0) + Math.cos(Date.now() / 2300.0) + Math.cos(Date.now() / 663)) * World.windForce,
+            x: (Math.cos(Date.now() / 29000.0) + Math.cos(Date.now() / 2300.0) + Math.cos(Date.now() / 663)) / 1000.0 * World.windForce,
             y: 0 * World.windForce,
-            z: 0 * World.windForce
+            z: (Math.sin(Date.now() / 21000.0) + Math.cos(Date.now() / 3100.0) + Math.sin(Date.now() / 517)) / 1000.0 * World.windForce,
         };
 
         const l = this.plants.length;
-        for(var i = 0; i < l; i++)
+        for(var i = l - 1; i >= 0; i--)
         {
             const plant = this.plants[i];
             if (!plant.update( wind, i ))
@@ -144,6 +145,7 @@ class World
         this.camera.rotation = new BABYLON.Vector3(10 * Math.PI / 180, 0, 0);
         this.camera.inertia = 0;
         this.camera.speed = 1.0;
+        this.camera.angularSensibility = 500.0;
 
         // Modify camera's keyboard controls
         const dsm = new BABYLON.DeviceSourceManager(scene.getEngine());
@@ -200,8 +202,33 @@ class World
     {
         if (eventData.deviceType === BABYLON.DeviceType.Keyboard) {
             const keyboard = dsm.getDeviceSource(BABYLON.DeviceType.Keyboard);
+            let shiftPressed = false;
 
-            // register the keyboard listener/action function on the scene
+            // listen for system keys, set flags
+            scene.onKeyboardObservable.add((kbInfo) => {
+                switch (kbInfo.type)
+                {
+                    case BABYLON.KeyboardEventTypes.KEYDOWN:
+                        switch (kbInfo.event.key)
+                        {
+                            case "Shift":
+                                shiftPressed = true;
+                                break;
+                            // "Ctrl" etc
+                        }
+                        break;
+        
+                    case BABYLON.KeyboardEventTypes.KEYUP:
+                        switch (kbInfo.event.key)
+                        {
+                            case "Shift":
+                                shiftPressed = false;
+                                break;
+                        }
+                }
+            });            
+
+            // check keypressed for movement control keys
             scene.beforeRender = () => {
                 const w = keyboard.getInput(87);
                 const a = keyboard.getInput(65);
@@ -209,24 +236,27 @@ class World
                 const d = keyboard.getInput(68);
                 const e = keyboard.getInput(69);
                 const q = keyboard.getInput(81);
+                const speed = World.cameraSpeed + (shiftPressed ? World.boostSpeed : 0);
                 if (w === 1) {
-                    this.camera.position.addInPlace(this.camera.getDirection(BABYLON.Vector3.Forward().scale(World.cameraSpeed)));
+                    this.camera.position.addInPlace(this.camera.getDirection(BABYLON.Vector3.Forward().scale(speed)));
                 }
                 if (s === 1) {
-                    this.camera.position.addInPlace(this.camera.getDirection(BABYLON.Vector3.Backward().scale(World.cameraSpeed)));
+                    this.camera.position.addInPlace(this.camera.getDirection(BABYLON.Vector3.Backward().scale(speed)));
                 }
                 if (a === 1) {
-                    this.camera.position.addInPlace(this.camera.getDirection(BABYLON.Vector3.Left().scale(World.cameraSpeed)));
+                    this.camera.position.addInPlace(this.camera.getDirection(BABYLON.Vector3.Left().scale(speed)));
                 }
                 if (d === 1) {
-                    this.camera.position.addInPlace(this.camera.getDirection(BABYLON.Vector3.Right().scale(World.cameraSpeed)));
+                    this.camera.position.addInPlace(this.camera.getDirection(BABYLON.Vector3.Right().scale(speed)));
                 }
                 if (e === 1) {
-                    this.camera.position.addInPlace(this.camera.getDirection(BABYLON.Vector3.Up().scale(World.cameraSpeed)));
+                    this.camera.position.addInPlace(this.camera.getDirection(BABYLON.Vector3.Up().scale(speed)));
                 }
                 if (q === 1) {
-                    this.camera.position.addInPlace(this.camera.getDirection(BABYLON.Vector3.Down().scale(World.cameraSpeed)));
+                    this.camera.position.addInPlace(this.camera.getDirection(BABYLON.Vector3.Down().scale(speed)));
                 }
+                if (this.camera.position.y < World.groundLevel + 1.0)
+                    this.camera.position.y = World.groundLevel + 1.0;
             };
         }
     }
