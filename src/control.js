@@ -12,13 +12,16 @@ class Control
         Control.engine = new BABYLON.Engine(Control.canvas, true);
         Control.engine.renderingCanvasRatio = null;
 
-        Control.world = new World();
-        Control.world.create();
+        Control.scene = new Scene();
+        Control.scene.create();
 
         Control.ui = new UI();
         Control.ui.create();
 
-        Control.title = Control.ui.add("text", { text: "Forest", x: 0, y: 0, width: 100, height: 50 });
+        Control.world = new World();
+        Control.world.create();
+
+        Control.title = Control.ui.add("text", { text: "Forest", x: 0, y: 0, width: 120, height: 50, color: "#006f00" });
 
         Control.engine.runRenderLoop(function () {
             Control.world.scene.render();

@@ -35,7 +35,7 @@ class World
     static plantMaxAge = 3 * this.daysPerYear;
 
     // public static variables
-    static time = 12.00;
+    static time = 6.00;
     static dayTime = World.time;
 
 
@@ -48,7 +48,6 @@ class World
         this.plants = null;
         this.ground = null;
 
-        this.camera = null;
         this.sun = null;
         this.ambient = null;
         this.shadowGenerator = null;
@@ -63,13 +62,52 @@ class World
 
     create()
     {
-        // graphics engine scene reference
-        this.scene = this.createScene();
+        this.scene = Control.scene.scene;
+
+        // add a ground layer
+        const groundOptions = { width: 1000, height: 1000, subdivisions: 10 };
+        this.ground = BABYLON.MeshBuilder.CreateGround("ground", groundOptions, this.scene);
+        this.ground.setAbsolutePosition(0, World.groundLevel, 0);
+        // create a material for the ground
+        var material = new BABYLON.StandardMaterial("material", this.scene);
+        material.specularColor = new BABYLON.Color3(0.0, 0.0, 0.0);
+        material.diffuseColor = new BABYLON.Color3(0.05, 0.2, 0.0);
+        this.ground.material = material;
+        this.ground.receiveShadows = true;
+        
+        //const envTex = BABYLON.CubeTexture.CreateFromPrefilteredData('https://assets.babylonjs.com/environments/environmentSpecular.env', this.scene);
+        this.skyMaterial = new BABYLON.SkyMaterial("skyMaterial", this.scene);
+        this.skyMaterial.backFaceCulling = false;
+        this.skyBox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 1000 }, this.scene);
+        this.skyBox.material = this.skyMaterial;
+        this.skyMaterial.useSunPosition = true;
+        this.skyMaterial.sunPosition = new BABYLON.Vector3(0, World.sunHeight, 0);
+
+        // Create lights and attach to the scene
+        this.sun = new BABYLON.DirectionalLight("light", new BABYLON.Vector3(0, -1, 0), this.scene);
+        this.sun.position = new BABYLON.Vector3(0, World.sunHeight, 0);
+        this.sun.intensity = 1.0;
+        this.sun.setDirectionToTarget(BABYLON.Vector3.Zero());
+        this.sun.shadowEnabled = true;
+
+        this.ambient = new BABYLON.HemisphericLight("HemiLight", new BABYLON.Vector3(0, 1, 0), this.scene);
+        this.ambient.intensity = 1.0;
+
+        // Create the shadow generator
+        this.shadowGenerator = new BABYLON.ShadowGenerator(4096, this.sun);
 
         // build the initial crop
         this.plants = [];
         this.createPlants();
         this.preparePlants();
+
+        // add date/time text to UI
+        this.showDateTime = Control.ui.add( "text", {
+            text: this.getDateTimeString(),
+            x: 0, y: 0, width: 500, height: 50,
+            hAlign: BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT,
+            color: "#007f00", size: 12
+        } );
 
         // commence the render loop, it is self-sustaining hereafter
         this.animate();
@@ -133,59 +171,8 @@ class World
         // dimmer when crossing the horizon, off when below the horizon
         this.sun.intensity = Math.min(Math.max(0, (this.sun.position.y + World.sunHeight * 0.25) / World.sunHeight), 1.0);
         this.ambient.intensity = Math.min(Math.max(0.1, (this.sun.position.y + World.sunHeight * 0.125) / World.sunHeight), 1.0);
-    }
 
-
-    createScene()
-    {
-        // Create a new scene
-        var scene = new BABYLON.Scene(Control.engine);
-
-        // Create a camera and attach it to the scene
-        this.camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(0, World.eyeLevel, -World.mapSize * 0.85), scene);
-        this.camera.attachControl(Control.canvas, true);
-        this.camera.rotation = new BABYLON.Vector3(10 * Math.PI / 180, 0, 0);
-        this.camera.inertia = 0;
-        this.camera.speed = 1.0;
-        this.camera.angularSensibility = 500.0;
-
-        // Modify camera's keyboard controls
-        const dsm = new BABYLON.DeviceSourceManager(scene.getEngine());
-        dsm.onDeviceConnectedObservable.add((eventData) => this.registerWASD( dsm, eventData, scene ));
-
-        // add a ground layer
-        const groundOptions = { width: 1000, height: 1000, subdivisions: 10 };
-        this.ground = BABYLON.MeshBuilder.CreateGround("ground", groundOptions, scene);
-        this.ground.setAbsolutePosition(0, World.groundLevel, 0);
-        // create a material for the ground
-        var material = new BABYLON.StandardMaterial("material", scene);
-        material.specularColor = new BABYLON.Color3(0.0, 0.0, 0.0);
-        material.diffuseColor = new BABYLON.Color3(0.05, 0.2, 0.0);
-        this.ground.material = material;
-        this.ground.receiveShadows = true;
-        
-        //const envTex = BABYLON.CubeTexture.CreateFromPrefilteredData('https://assets.babylonjs.com/environments/environmentSpecular.env', scene);
-        this.skyMaterial = new BABYLON.SkyMaterial("skyMaterial", scene);
-        this.skyMaterial.backFaceCulling = false;
-        this.skyBox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 1000 }, scene);
-        this.skyBox.material = this.skyMaterial;
-        this.skyMaterial.useSunPosition = true;
-        this.skyMaterial.sunPosition = new BABYLON.Vector3(0, World.sunHeight, 0);
-
-        // Create lights and attach to the scene
-        this.sun = new BABYLON.DirectionalLight("light", new BABYLON.Vector3(0, -1, 0), scene);
-        this.sun.position = new BABYLON.Vector3(0, World.sunHeight, 0);
-        this.sun.intensity = 1.0;
-        this.sun.setDirectionToTarget(BABYLON.Vector3.Zero());
-        this.sun.shadowEnabled = true;
-
-        this.ambient = new BABYLON.HemisphericLight("HemiLight", new BABYLON.Vector3(0, 1, 0), scene);
-        this.ambient.intensity = 1.0;
-
-        // Create the shadow generator
-        this.shadowGenerator = new BABYLON.ShadowGenerator(4096, this.sun);
-
-        return scene;
+        Control.ui.modify("text", this.showDateTime, { text: this.getDateTimeString() });
     }
 
 
@@ -211,66 +198,12 @@ class World
     }
 
 
-    registerWASD( dsm, eventData, scene )
+    getDateTimeString()
     {
-        if (eventData.deviceType === BABYLON.DeviceType.Keyboard) {
-            const keyboard = dsm.getDeviceSource(BABYLON.DeviceType.Keyboard);
-            let shiftPressed = false;
-
-            // listen for system keys, set flags
-            scene.onKeyboardObservable.add((kbInfo) => {
-                switch (kbInfo.type)
-                {
-                    case BABYLON.KeyboardEventTypes.KEYDOWN:
-                        switch (kbInfo.event.key)
-                        {
-                            case "Shift":
-                                shiftPressed = true;
-                                break;
-                            // "Ctrl" etc
-                        }
-                        break;
-        
-                    case BABYLON.KeyboardEventTypes.KEYUP:
-                        switch (kbInfo.event.key)
-                        {
-                            case "Shift":
-                                shiftPressed = false;
-                                break;
-                        }
-                }
-            });            
-
-            // check keypressed for movement control keys
-            scene.beforeRender = () => {
-                const w = keyboard.getInput(87);
-                const a = keyboard.getInput(65);
-                const s = keyboard.getInput(83);
-                const d = keyboard.getInput(68);
-                const e = keyboard.getInput(69);
-                const q = keyboard.getInput(81);
-                const speed = World.cameraSpeed + (shiftPressed ? World.boostSpeed : 0);
-                if (w === 1) {
-                    this.camera.position.addInPlace(this.camera.getDirection(BABYLON.Vector3.Forward().scale(speed)));
-                }
-                if (s === 1) {
-                    this.camera.position.addInPlace(this.camera.getDirection(BABYLON.Vector3.Backward().scale(speed)));
-                }
-                if (a === 1) {
-                    this.camera.position.addInPlace(this.camera.getDirection(BABYLON.Vector3.Left().scale(speed)));
-                }
-                if (d === 1) {
-                    this.camera.position.addInPlace(this.camera.getDirection(BABYLON.Vector3.Right().scale(speed)));
-                }
-                if (e === 1) {
-                    this.camera.position.addInPlace(this.camera.getDirection(BABYLON.Vector3.Up().scale(speed)));
-                }
-                if (q === 1) {
-                    this.camera.position.addInPlace(this.camera.getDirection(BABYLON.Vector3.Down().scale(speed)));
-                }
-                if (this.camera.position.y < World.groundLevel + 1.0)
-                    this.camera.position.y = World.groundLevel + 1.0;
-            };
-        }
+        const days = Math.floor(World.time / World.hoursPerDay);
+        const year = Math.floor(days / World.daysPerYear) + 1;
+        const day = days % World.daysPerYear + 1;
+        const hour = Math.floor(World.time % World.hoursPerDay);
+        return "Year: " + ("000" + year).slice(-4) + " Day: " + day + " Time: " + hour + ":00";
     }
 }
