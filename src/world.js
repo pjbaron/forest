@@ -55,7 +55,7 @@ class World
         this.skyMaterial = null;
         this.skyBox = null;
 
-        World.time = 12.00;
+        World.time = 6.00;
         World.dayTime = World.time;
     }
 
@@ -104,7 +104,7 @@ class World
         // add date/time text to UI
         this.showDateTime = Control.ui.add( "text", {
             text: this.getDateTimeString(),
-            x: 0, y: 0, width: 500, height: 50,
+            x: 0, y: 0, width: 200, height: 50,
             hAlign: BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT,
             color: "#007f00", size: 12
         } );
