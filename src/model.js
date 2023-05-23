@@ -7,12 +7,13 @@ class Model
     {
         this.size = null;
         this.voxels = null;
+        this.cellCount = 0;
     }
 
 
     create()
     {
-        this.size = {x:World.plantSize.x, y:World.plantSize.y, z:World.plantSize.z};
+        this.size = {x:World.plantSizeLimits.x, y:World.plantSizeLimits.y, z:World.plantSizeLimits.z};
 
         const cell = new Cell();
         cell.create(World.seedEnergy, World.seedNutrients);
@@ -22,6 +23,7 @@ class Model
         const mz = Math.floor(this.size.z / 2);
 
         this.voxels[mx][0][mz] = cell;
+        this.cellCount = 1;
     }
 
 
@@ -35,6 +37,7 @@ class Model
         const mx = Math.floor(this.size.x / 2);
         const mz = Math.floor(this.size.z / 2);
         this.voxels[location.x + mx][location.y][location.z + mz] = cell;
+        this.cellCount++;
     }
 
 }

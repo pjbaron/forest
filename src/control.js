@@ -15,6 +15,11 @@ class Control
         Control.world = new World();
         Control.world.create();
 
+        Control.ui = new UI();
+        Control.ui.create();
+
+        Control.title = Control.ui.add("text", { text: "Forest", x: 0, y: 0, width: 100, height: 50 });
+
         Control.engine.runRenderLoop(function () {
             Control.world.scene.render();
         });

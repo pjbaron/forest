@@ -13,23 +13,43 @@ class Plant
         this.verlet = null;
         this.leaves = null;
 
+        // DNA
+        // TODO: vary these for each plant
+        this.seedStartDelay = 5.0;              // delay in days before plant starts growing a seed
+        this.seedStorePercent = 0.25;           // how much of total energy goes into a growing seed
+        this.seedEnergy = World.seedEnergy;     // how much energy does the plant's seed require
+        this.seedReleaseDelay = 0;              // delay in days before a full seed will be released
+        this.seedReleasePower = 10;             // amount of energy to propel the seed on release
+        this.ageDamage = 1.0;                   // how quickly do this plant's cells age
+        this.maximumAge = World.plantMaxAge;    // maximum age for this plant
+        this.growthEnergyPercent = 0.2;         // amount of energy the plant uses for growth (stored = total - seed - growth)
+        this.growthEnergyCurve = 0.99999;       // growth energy percent is multiplied by this constant daily
+        this.storeEfficiency = 0.75;            // amount of energy that can be retrieved from store
+        this.energyPerCell = 1000;              // total amount of energy that can be stored in each cell
+
+        // control variables
         this.totalLight = 0;
-        this.totalEnergy = 0;
+        this.storedEnergy = World.seedEnergy;
+        this.growthEnergy = 0;
+        this.seedStore = 0;
+        this.seedStartDate = World.time + this.seedReleaseDelay * World.hoursPerDay;
+        this.currentAge = Math.random() * World.plantMaxAge * 0.25;
+        this.dateOfBirth = World.time;
     }
 
-
+            
     create( worldPosition )
     {
         // build a 'plant' model
         this.model = new Model();
         this.model.create();
-        this.model.add({x: 0, y: 1, z: 0});
-        this.model.add({x: 0, y: 2, z: 0});
-        this.model.add({x: 0, y: 3, z: 0});
-        this.model.add({x: 1, y: 1, z: 0});
-        this.model.add({x: -1, y: 1, z: 0});
-        this.model.add({x: 0, y: 2, z: -1});
-        this.model.add({x: 0, y: 2, z: 1});
+        // this.model.add({x: 0, y: 1, z: 0});
+        // this.model.add({x: 0, y: 2, z: 0});
+        // this.model.add({x: 0, y: 3, z: 0});
+        // this.model.add({x: 1, y: 1, z: 0});
+        // this.model.add({x: -1, y: 1, z: 0});
+        // this.model.add({x: 0, y: 2, z: -1});
+        // this.model.add({x: 0, y: 2, z: 1});
 
         // convert it to a custom mesh
         this.mesh = this.cubish.createCustomMesh(this.scene, this.model);
@@ -45,7 +65,7 @@ class Plant
         this.leaves = this.findLeaves();
 
         // initialise plant variables
-        this.totalEnergy = 0;
+        this.totalLight = 0;
         // TODO: should vary depending on plant status as well as size (hibernate at night, growth speed...)
         this.costOfLiving = World.costOfLiving * this.leaves.length;
     }
@@ -87,10 +107,68 @@ class Plant
         this.mesh.updateVerticesData(BABYLON.VertexBuffer.PositionKind, this.vertices);
 
         // TODO: include elapsed real-time?
-        this.totalEnergy += this.totalLight;
-        this.totalEnergy -= this.costOfLiving;
+        var totalEnergy = this.totalLight;
+        totalEnergy = this.seedGrowth(totalEnergy);
+        totalEnergy = this.plantGrowth(totalEnergy);
 
-        return (this.totalEnergy > 0);
+        // store the remaining energy at a loss, with a cap
+        this.storedEnergy = Math.min(this.storedEnergy + totalEnergy * this.storeEfficiency, this.energyPerCell * this.model.cellCount);
+        this.storedEnergy -= this.costOfLiving;
+
+        return (this.storedEnergy > 0);
+    }
+
+
+    plantGrowth( totalEnergy )
+    {
+        // allocate to growth
+        var forGrowth = totalEnergy * Math.min(this.growthEnergyPercent, 1.0);
+        totalEnergy -= forGrowth;
+        this.growthEnergy += forGrowth;
+        // TODO: spend growth energy on growth immediately
+
+        // modify how much of our energy we spend on growth
+        this.growthEnergyPercent *= this.growthEnergyCurve;
+        // TODO: add growth energy curve over the course of a day
+        return totalEnergy;
+    }
+
+
+    seedGrowth( totalEnergy )
+    {
+        // are we growing a seed yet?
+        if (World.time > this.seedStartDate)
+        {
+            // is the seed still growing?
+            if (this.seedStore < this.seedEnergy)
+            {
+                // allocate to the seed
+                // TODO: add seed growth energy curve over the course of a day
+                var forSeed = Math.min(totalEnergy * this.seedStorePercent, this.seedEnergy - this.seedStore);
+                totalEnergy -= forSeed;
+                this.seedStore += forSeed;
+                // when full, calculate the seed launch day
+                if (this.seedStore >= this.seedEnergy)
+                    this.seedLaunch = World.time + this.seedReleaseDelay * World.hoursPerDay;
+            }
+            else
+            {
+                // the seed is full, wait for launch-day
+                if (World.time >= this.seedLaunchDay)
+                {
+                    // charge the seed's launch price
+                    this.seedStore -= this.seedReleasePower;
+                    if (this.seedStore > 0)
+                    {
+                        // TODO: launch the seed, with mutations
+                        console.log(World.time + ": " + this.mesh.name + " seeded.");
+                    }
+                    this.seedStore = 0;
+                    this.seedStartDate = World.time + this.seedStartDelay * World.hoursPerDay;
+                }
+            }
+        }
+        return totalEnergy;
     }
 
 
@@ -156,7 +234,6 @@ class Plant
             if (hitInfo.hit)
             {
                 ambient++;
-                /* TODO: test, tracking the slow-down at night
                 // raytrace along the normal and check if the ray can extend a decent distance
                 ray.direction = leaf.normal;
                 ray.length = 10;
@@ -171,7 +248,6 @@ class Plant
                     // indirect sunlight received
                     indirect++;
                 }
-                */
             }
             else
             {
@@ -185,7 +261,7 @@ class Plant
         this.totalLight += indirect * (Control.world.ambient.intensity + Control.world.sun.intensity * World.indirectLightPercent);
         this.totalLight += direct * (Control.world.ambient.intensity + Control.world.sun.intensity);
         this.totalLight *= World.lightEnergyScaler;
-        //console.log(Math.floor(Control.world.time * 100) / 100 + ": " + this.mesh.name + "[" + Math.round(this.totalEnergy) + "] receiving " + this.totalLight + " " + ambient + " " + indirect + " " + direct);
+        //console.log(Math.floor(Control.world.dayTime * 100) / 100 + ": " + this.mesh.name + "[" + Math.round(this.storedEnergy) + "] receiving " + this.totalLight + " " + ambient + " " + indirect + " " + direct);
     }
 
 

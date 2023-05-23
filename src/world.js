@@ -16,6 +16,11 @@ class World
     static indirectLightPercent = 0.5;  // pcent of direct sunlight which arrives indirectly
     static lightEnergyScaler = 0.01;    // the default plant receives ~125 light per tick, scale it down by this
 
+    // time, seasons and weather
+    static hoursPerDay = 24.0;          // hour 0 = midnight
+    static daysPerYear = 25;            // day 0 = mid-winter
+    static daySpeed = 0.5;
+
     // camera
     static eyeLevel = 5;
     static groundLevel = 0;
@@ -24,10 +29,14 @@ class World
 
     // plants
     static maxPlants = 128;
-    static seedEnergy = 16;
-    static seedNutrients = 16;
-    static plantSize = { x: 9, y: 25, z: 9 };
-    static costOfLiving = 0.004;
+    static seedEnergy = 100;
+    static plantSizeLimits = { x: 9, y: 25, z: 9 };
+    static costOfLiving = 0.005;
+    static plantMaxAge = 3 * this.daysPerYear;
+
+    // public static variables
+    static time = 12.00;
+    static dayTime = World.time;
 
 
 
@@ -47,7 +56,8 @@ class World
         this.skyMaterial = null;
         this.skyBox = null;
 
-        this.time = 12.00;
+        World.time = 12.00;
+        World.dayTime = World.time;
     }
 
 
@@ -55,17 +65,6 @@ class World
     {
         // graphics engine scene reference
         this.scene = this.createScene();
-
-        // add a ground layer
-        const groundOptions = { width: 1000, height: 1000, subdivisions: 10 };
-        this.ground = BABYLON.MeshBuilder.CreateGround("ground", groundOptions, this.scene);
-        this.ground.setAbsolutePosition(0, World.groundLevel, 0);
-        // create a material for the ground
-        var material = new BABYLON.StandardMaterial("material", this.scene);
-        material.specularColor = new BABYLON.Color3(0.0, 0.0, 0.0);
-        material.diffuseColor = new BABYLON.Color3(0.05, 0.2, 0.0);
-        this.ground.material = material;
-        this.ground.receiveShadows = true;
 
         // build the initial crop
         this.plants = [];
@@ -102,7 +101,7 @@ class World
             const plant = this.plants[i];
             if (!plant.update( wind, i ))
             {
-                console.log(this.time + ": " + plant.mesh.name + " died, leaving [" + (this.plants.length - 1) + "]");
+                console.log(World.dayTime + ": " + plant.mesh.name + " died, leaving [" + (this.plants.length - 1) + "]");
                 plant.destroy();
                 this.plants.splice( i, 1 );
             }
@@ -114,15 +113,18 @@ class World
     {
         // TODO: add moonlight
 
-        // advance time of day
-        this.time = (this.time + 1/60 * 0.1) % 24.0;  // 6 seconds per tick
+        // advance time of day (TODO: replace 1/60 with Control.elapsedTime)
+        World.time = World.time + 1/60 * World.daySpeed;
+        World.dayTime = World.time % 24.0;
 
-        // angle to sun (180 = above at noon)
-        var angle = this.time / 24.0 * Math.PI * 2.0;
+        // angle to sun based on time-of-day (180 = noon)
+        var dayAngle = World.dayTime / 24.0 * Math.PI * 2.0;
+        // angle to sun based on time-of-year (0 = winter)
+        var yearAngle = (World.time % World.daysPerYear) / 24.0 * Math.PI;
 
-        this.sun.position.x = Math.sin(angle) * World.sunHeight;
-        this.sun.position.y = Math.cos(angle) * -World.sunHeight;
-        this.sun.position.z = 0;                    // TODO: seasonal variation here
+        this.sun.position.x = Math.sin(dayAngle) * World.sunHeight;
+        this.sun.position.y = Math.cos(dayAngle) * -World.sunHeight;
+        this.sun.position.z = Math.sin(yearAngle) * World.sunHeight;
         this.sun.setDirectionToTarget(BABYLON.Vector3.Zero());
 
         // update the visual 'sun' in the sky material
@@ -140,7 +142,7 @@ class World
         var scene = new BABYLON.Scene(Control.engine);
 
         // Create a camera and attach it to the scene
-        this.camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(0, World.eyeLevel, -World.mapSize * 0.75), scene);
+        this.camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(0, World.eyeLevel, -World.mapSize * 0.85), scene);
         this.camera.attachControl(Control.canvas, true);
         this.camera.rotation = new BABYLON.Vector3(10 * Math.PI / 180, 0, 0);
         this.camera.inertia = 0;
@@ -151,6 +153,17 @@ class World
         const dsm = new BABYLON.DeviceSourceManager(scene.getEngine());
         dsm.onDeviceConnectedObservable.add((eventData) => this.registerWASD( dsm, eventData, scene ));
 
+        // add a ground layer
+        const groundOptions = { width: 1000, height: 1000, subdivisions: 10 };
+        this.ground = BABYLON.MeshBuilder.CreateGround("ground", groundOptions, scene);
+        this.ground.setAbsolutePosition(0, World.groundLevel, 0);
+        // create a material for the ground
+        var material = new BABYLON.StandardMaterial("material", scene);
+        material.specularColor = new BABYLON.Color3(0.0, 0.0, 0.0);
+        material.diffuseColor = new BABYLON.Color3(0.05, 0.2, 0.0);
+        this.ground.material = material;
+        this.ground.receiveShadows = true;
+        
         //const envTex = BABYLON.CubeTexture.CreateFromPrefilteredData('https://assets.babylonjs.com/environments/environmentSpecular.env', scene);
         this.skyMaterial = new BABYLON.SkyMaterial("skyMaterial", scene);
         this.skyMaterial.backFaceCulling = false;
