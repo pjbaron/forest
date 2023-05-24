@@ -155,4 +155,19 @@ class Verlet
     }
 
 
+    unlock()
+    {
+        const l = this.lockedVertices.length;
+        for(var i = 0; i < l; i++)
+            this.lockedVertices[i] = false;
+    }
+
+
+    cancelForces()
+    {
+        const memVertices = this.vertices.slice();
+        this.oldVertices = memVertices;
+    }
+
+
 }

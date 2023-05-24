@@ -1,11 +1,18 @@
 
 class Plant
 {
+    static id = 0;
+
     constructor( scene, cubish )
     {
+        // GUID
+        this.id = Plant.id++;
+
+        // received
         this.scene = scene;
         this.cubish = cubish;
 
+        // created
         this.model = null;
         this.mesh = null;
         this.vertices = null;
@@ -36,6 +43,7 @@ class Plant
         this.seedLaunchDate = 0;
         this.currentAge = Math.random() * World.plantMaxAge * 0.25;
         this.dateOfBirth = World.time;
+        this.launching = false;
     }
 
             
@@ -53,7 +61,7 @@ class Plant
         // this.model.add({x: 0, y: 2, z: 1});
 
         // convert it to a custom mesh
-        this.mesh = this.cubish.createCustomMesh(this.scene, this.model);
+        this.mesh = this.cubish.createCustomMesh(this.scene, this.model, {x:0, y:0.5, z:0});
         this.mesh.setAbsolutePosition( worldPosition );
         this.mesh.checkCollisions = true;
 
@@ -62,13 +70,22 @@ class Plant
         this.indices = this.mesh.getIndices();
         this.verlet = new Verlet( this.vertices, this.indices );
 
+// DEBUG: verify face normal calculations are correct
+//const newFaceNormal = this.cubish.getFaceNormal(0, this.vertices, this.indices);
+//console.log("seed face 0 start normal " + newFaceNormal);
+    
         // find all the leaves (triangles which have a normal with y >= 0)
         this.leaves = this.findLeaves();
 
         // initialise plant variables
+        this.launching = false;
         this.totalLight = 0;
         // TODO: should vary depending on plant status as well as size (hibernate at night, growth speed...)
         this.costOfLiving = World.costOfLiving * this.leaves.length;
+
+        // DEBUG: test launch
+        if (this.id == 0)
+            this.launchSeed( this.seedReleasePower );
     }
 
 
@@ -80,7 +97,6 @@ class Plant
         this.indices = null;
         this.verlet = null;
         this.leaves = null;
-
     }
 
 
@@ -89,24 +105,31 @@ class Plant
     {
         // calculate the amount of light landing on each triangle
         this.lightAmount();
-
-        //this.debugLightLevels();
     }
 
 
     /// return false if the plant dies
     update( force, plantIndex )
     {
-        // lazy recalculation of light, one plant per frame
-        if (plantIndex == (Math.floor(Control.world.tick % Control.world.plants.length)))
-            this.lightAmount();
-
         // TODO: use plantIndex to time-slice intensive calculations (e.g. light received)
         // plantIndex is not fixed for a given plant - the plant list is mutable
 
+        // update physics, refresh the mesh
         this.verlet.update( force );
         this.mesh.updateVerticesData(BABYLON.VertexBuffer.PositionKind, this.vertices);
 
+        if (this.launching)
+        {
+            this.launching = this.flyingSeedPod();
+            return true;
+        }
+
+        // lazy recalculation of light, one plant per frame
+        // TODO: very inaccurate when many plants and fast day cycle
+        if (plantIndex == (Math.floor(Control.world.tick % Control.world.plants.length)))
+            this.lightAmount();
+
+        // divide the light energy amongst seed growth, plant growth, and storage
         // TODO: include elapsed real-time?
         var totalEnergy = this.totalLight;
         totalEnergy = this.seedGrowth(totalEnergy);
@@ -266,18 +289,6 @@ class Plant
     }
 
 
-    debugLightLevels()
-    {
-        const l = this.leaves.length;
-        for(var i = 0; i < l; i++)
-        {
-            const leaf = this.leaves[i];
-            const sphere = BABYLON.MeshBuilder.CreateSphere("sphere", { diameter: (leaf.normal.y + 0.25) / 2.0 }, this.scene);
-            sphere.setAbsolutePosition(leaf.position.add(this.mesh.position));
-        }
-    }
-
-
     clone( worldPosition )
     {
         const plant = new Plant( this.scene, this.cubish );
@@ -319,5 +330,63 @@ class Plant
         plant.energyPerCell = this.energyPerCell;
     }
 
-}
 
+    /// launch a seed pod into the air using some of its stored energy
+    launchSeed( launchPower )
+    {
+        console.log("launch a seed!");
+
+        // try to launch with launchPower, if we have that much storedEnergy
+        const power = Math.min(launchPower, this.storedEnergy);
+        this.storedEnergy -= power;
+
+        const angle = Math.random() * Math.PI * 2.0;
+        const lx = Math.sin(angle) * power / 40.0;
+        const lz = Math.cos(angle) * power / 40.0;
+        this.verlet.unlock();
+        this.verlet.move(new BABYLON.Vector3(lx, power / 20.0, lz));
+        this.launching = true;
+    }
+
+
+    /// make the seed pod fly, control the landing, return false when it is ready to grow
+    flyingSeedPod()
+    {
+        const l = this.vertices.length;
+        const grounded = [];
+        for(var i = 0; i < l; i += 3)
+        {
+            if (Math.abs(this.vertices[i + 1] - World.groundLevel) < 0.001)
+            {
+                grounded.push(i);
+            }
+        }
+
+        // wait for seed pod to get one face flat on the ground
+        if (grounded.length >= 4)
+        {
+            console.log("seed landed");
+
+            const faceNormal = this.cubish.getFaceNormal(0, this.vertices, this.indices);
+            console.log("seed face 0 normal " + faceNormal);
+
+            // spin the cube so that face 0 is on the ground
+            this.cubish.adjustCubeToGround(faceNormal, this.vertices);
+
+    const newFaceNormal = this.cubish.getFaceNormal(0, this.vertices, this.indices);
+    console.log("seed face 0 new normal " + newFaceNormal);
+
+            // lock the floor contact vertices of face 0
+            for(var i = 0; i < 4; i++)
+                this.verlet.lockedVertices[i] = true;
+
+            // cancel all forces on the seed, to prevent it twisting on its next update
+            this.verlet.cancelForces();
+
+            return false;
+        }
+
+        return true;
+    }
+      
+}

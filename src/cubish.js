@@ -6,18 +6,18 @@ class Cubish
     
     // an irregular cube
     irregularCube = {
-        positions :
+        positions : // begin as a regular unit cube with the origin at the C.O.M.
         [
             // bottom
-            -0.5, 0, 0.5,
-            0.5, 0, 0.5,
-            0.5, 0, -0.5,
-            -0.5, 0, -0.5,
+            -0.5, -0.5, 0.5,
+            0.5, -0.5, 0.5,
+            0.5, -0.5, -0.5,
+            -0.5, -0.5, -0.5,
             // top
-            -0.5, 1, 0.5,
-            0.5, 1, 0.5,
-            0.5, 1, -0.5,
-            -0.5, 1, -0.5,
+            -0.5, 0.5, 0.5,
+            0.5, 0.5, 0.5,
+            0.5, 0.5, -0.5,
+            -0.5, 0.5, -0.5,
         ],
         indices :   // cw winding, middle value is the 90 degree corner vertex, diagonals are all implied (loop back to start)
         [
@@ -80,7 +80,7 @@ class Cubish
     }
 
 
-    createCustomMesh(scene, model)
+    createCustomMesh(scene, model, vertexOffset)
     {
         // create buffer for the vertex data
         var vertexData = new BABYLON.VertexData();
@@ -110,6 +110,7 @@ class Cubish
         BABYLON.VertexData.ComputeNormals(positions, indices, normals);
 
         // store the shape data in the vertexData buffer
+        this.offsetPositions(positions, vertexOffset.x, vertexOffset.y, vertexOffset.z);
         vertexData.positions = positions;
         vertexData.indices = indices;
         vertexData.normals = normals;
@@ -131,4 +132,105 @@ class Cubish
 
         return mesh;
     }
+
+
+    getFaceNormal( faceIndex, vertices, indices )
+    {
+        const f = faceIndex * 6;    // there are 6 indices per face (two triangles)
+
+        // find normalised normals for both triangles
+        const n0 = this.calculateTriangleNormal(f + 0, vertices, indices);
+        const n1 = this.calculateTriangleNormal(f + 3, vertices, indices);
+
+        // return the average of both normals
+        return [ (n0[0] + n1[0]) / 2, (n0[1] + n1[1]) / 2, (n0[2] + n1[2]) / 2 ];
+    }
+
+
+    calculateTriangleNormal( first, vertices, indices )
+    {
+        const v0 = indices[first + 0] * 3;
+        const Ax = vertices[v0 + 0];
+        const Ay = vertices[v0 + 1];
+        const Az = vertices[v0 + 2];
+
+        const v1 = indices[first + 1] * 3;
+        const Bx = vertices[v1 + 0];
+        const By = vertices[v1 + 1];
+        const Bz = vertices[v1 + 2];
+
+        const v2 = indices[first + 2] * 3;
+        const Cx = vertices[v2 + 0];
+        const Cy = vertices[v2 + 1];
+        const Cz = vertices[v2 + 2];
+
+        // Calculate the edge vectors
+        const AB = [Bx - Ax, By - Ay, Bz - Az];
+        const AC = [Cx - Ax, Cy - Ay, Cz - Az];
+
+        // Compute the cross product (AC x AB)
+        const normal = [
+            AC[1] * AB[2] - AC[2] * AB[1],
+            AC[2] * AB[0] - AC[0] * AB[2],
+            AC[0] * AB[1] - AC[1] * AB[0]
+        ];
+
+        // Normalise the normal vector
+        const length = Math.sqrt(normal[0] * normal[0] + normal[1] * normal[1] + normal[2] * normal[2]);
+        const normalisedNormal = [
+            normal[0] / length,
+            normal[1] / length,
+            normal[2] / length
+        ];
+
+        return normalisedNormal;
+    }
+
+
+    // spin the cube so that faceNormal is facing down, without moving it otherwise
+    adjustCubeToGround( faceNormal, vertices )
+    {
+        const targetNormal = [0, -1, 0];    // Normal vector for the target face (ground)
+
+        // Calculate rotation axis
+        const rotationAxis = [
+            faceNormal[1] * targetNormal[2] - faceNormal[2] * targetNormal[1],
+            faceNormal[2] * targetNormal[0] - faceNormal[0] * targetNormal[2],
+            faceNormal[0] * targetNormal[1] - faceNormal[1] * targetNormal[0]
+        ];
+
+        // Calculate rotation angle
+        const dotProduct = faceNormal[0] * targetNormal[0] +
+        faceNormal[1] * targetNormal[1] +
+        faceNormal[2] * targetNormal[2];
+        const rotationAngle = Math.acos(dotProduct);
+
+        // Apply rotation transformation to each vertex
+        const l = vertices.length;
+        for (var i = 0; i < l; i += 3)
+        {
+            const x = vertices[i + 0];
+            const y = vertices[i + 1];
+            const z = vertices[i + 2];
+
+            const s = Math.sin(rotationAngle);
+            const c = Math.cos(rotationAngle);
+
+            // Perform rotation using rotation axis and angle
+            const rotatedX = x * c +
+                (rotationAxis[1] * z - rotationAxis[2] * y) * s +
+                rotationAxis[0] * (rotationAxis[0] * x + rotationAxis[1] * y + rotationAxis[2] * z) * (1 - c);
+            const rotatedY = y * c +
+                (rotationAxis[2] * x - rotationAxis[0] * z) * s +
+                rotationAxis[1] * (rotationAxis[0] * x + rotationAxis[1] * y + rotationAxis[2] * z) * (1 - c);
+            const rotatedZ = z * c +
+                (rotationAxis[0] * y - rotationAxis[1] * x) * s +
+                rotationAxis[2] * (rotationAxis[0] * x + rotationAxis[1] * y + rotationAxis[2] * z) * (1 - c);
+
+            vertices[i + 0] = rotatedX;
+            vertices[i + 1] = rotatedY;
+            vertices[i + 2] = rotatedZ;
+        }
+    }
+
 }
