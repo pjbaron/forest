@@ -110,7 +110,10 @@ class Cubish
         BABYLON.VertexData.ComputeNormals(positions, indices, normals);
 
         // store the shape data in the vertexData buffer
-        this.offsetPositions(positions, vertexOffset.x, vertexOffset.y, vertexOffset.z);
+        if (vertexOffset)
+        {
+            this.offsetPositions(positions, vertexOffset.x, vertexOffset.y, vertexOffset.z);
+        }
         vertexData.positions = positions;
         vertexData.indices = indices;
         vertexData.normals = normals;

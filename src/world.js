@@ -29,9 +29,9 @@ class World
 
     // plants
     static maxPlants = 128;
-    static seedEnergy = 100;
+    static seedEnergy = 50;    //100;
     static plantSizeLimits = { x: 9, y: 25, z: 9 };
-    static costOfLiving = 0.005;
+    static costOfLiving = 0.001;    //0.005;
     static plantMaxAge = 3 * this.daysPerYear;
 
     // public static variables
@@ -181,10 +181,16 @@ class World
         for(var i = 0; i < World.maxPlants; i++)
         {
             var plant = new Plant(this.scene, this.cubish);
-            plant.create( new BABYLON.Vector3( (Math.random() - 0.5) * World.mapSize, World.groundLevel, (Math.random() - 0.5) * World.mapSize ) );
-            this.plants.push( plant );
-            this.shadowGenerator.addShadowCaster( plant.mesh );
+            plant.create({ x: (Math.random() - 0.5) * World.mapSize, y: World.groundLevel, z: (Math.random() - 0.5) * World.mapSize });
+            this.addNewPlant(plant);
         }
+    }
+
+    
+    addNewPlant( plant )
+    {
+        this.plants.push( plant );
+        this.shadowGenerator.addShadowCaster(plant.mesh);
     }
 
 

@@ -125,7 +125,7 @@ class Verlet
         const memVertices = this.vertices.slice();
         if (!this.oldVertices) this.oldVertices = memVertices;
 
-        // calculate simple forces on the vertex
+        // calculate simple forces on the vertex (F = m*a; m = 1.0; F = a)
         const applyForce = { x: force.x, y: force.y + World.gravity, z: force.z };
 
         // for all vertices in the shape

@@ -22,7 +22,7 @@ class Plant
 
         // DNA
         // TODO: vary these for each plant
-        this.seedStartDelay = 5.0;              // delay in days before plant starts growing a seed
+        this.seedStartDelay = 3.0;              // delay in days before plant starts growing a seed
         this.seedStorePercent = 0.25;           // how much of total energy goes into a growing seed
         this.seedEnergy = World.seedEnergy;     // how much energy does the plant's seed require
         this.seedReleaseDelay = 0;              // delay in days before a full seed will be released
@@ -44,11 +44,14 @@ class Plant
         this.currentAge = Math.random() * World.plantMaxAge * 0.25;
         this.dateOfBirth = World.time;
         this.launching = false;
+        this.worldPosition = null;
     }
 
             
     create( worldPosition )
     {
+        this.worldPosition = new BABYLON.Vector3(worldPosition.x, worldPosition.y, worldPosition.z);
+
         // build a 'plant' model
         this.model = new Model();
         this.model.create();
@@ -62,7 +65,7 @@ class Plant
 
         // convert it to a custom mesh
         this.mesh = this.cubish.createCustomMesh(this.scene, this.model, {x:0, y:0.5, z:0});
-        this.mesh.setAbsolutePosition( worldPosition );
+        this.mesh.setAbsolutePosition( this.worldPosition );
         this.mesh.checkCollisions = true;
 
         // data references, then build the verlet representation for soft-body physics
@@ -84,8 +87,8 @@ class Plant
         this.costOfLiving = World.costOfLiving * this.leaves.length;
 
         // DEBUG: test launch
-        if (this.id == 0)
-            this.launchSeed( this.seedReleasePower );
+        //if (this.id == 0)
+            //this.launchSeed( this.seedReleasePower );
     }
 
 
@@ -184,7 +187,11 @@ class Plant
                     this.seedStore -= this.seedReleasePower;
                     if (this.seedStore > 0)
                     {
-                        // TODO: launch the seed, with mutations
+                        // launch the seed
+                        const seed = this.clone();
+                        // TODO: mutations to DNA
+                        Control.world.addNewPlant(seed);
+                        seed.launchSeed(seed.seedReleasePower);
                         console.log(World.time + ": " + this.mesh.name + " seeded.");
                     }
                     this.seedStore = 0;
@@ -289,53 +296,9 @@ class Plant
     }
 
 
-    clone( worldPosition )
-    {
-        const plant = new Plant( this.scene, this.cubish );
-
-        // copy my 'plant' model
-        // TODO: mutate for seeds
-        plant.model = this.model.clone();
-
-        // convert it to a custom mesh
-        plant.mesh = plant.cubish.createCustomMesh(plant.scene, plant.model);
-        plant.mesh.setAbsolutePosition( worldPosition );
-        plant.mesh.checkCollisions = true;
-
-        // data references, then build the verlet representation for soft-body physics
-        plant.vertices = plant.mesh.getVerticesData(BABYLON.VertexBuffer.PositionKind);
-        plant.indices = plant.mesh.getIndices();
-        plant.verlet = new Verlet( plant.vertices, plant.indices );
-        
-        // find all the leaves (triangles which have a normal with y >= 0)
-        plant.leaves = this.findLeaves();
-
-        // initialise plant variables
-        plant.totalLight = 0;
-        // TODO: should vary depending on plant status as well as size (hibernate at night, growth speed...)
-        plant.costOfLiving = World.costOfLiving * plant.leaves.length;        
-
-        // DNA
-        // TODO: mutate for seeds
-        plant.seedStartDelay = this.seedStartDelay;
-        plant.seedStorePercent = this.seedStorePercent;
-        plant.seedEnergy = this.seedEnergy;
-        plant.seedReleaseDelay = this.seedReleaseDelay;
-        plant.seedReleasePower = this.seedReleasePower;
-        plant.ageDamage = this.ageDamage;
-        plant.maximumAge = this.maximumAge;
-        plant.growthEnergyPercent = this.growthEnergyPercent;
-        plant.growthEnergyCurve = this.growthEnergyCurve;
-        plant.storeEfficiency = this.storeEfficiency;
-        plant.energyPerCell = this.energyPerCell;
-    }
-
-
     /// launch a seed pod into the air using some of its stored energy
     launchSeed( launchPower )
     {
-        console.log("launch a seed!");
-
         // try to launch with launchPower, if we have that much storedEnergy
         const power = Math.min(launchPower, this.storedEnergy);
         this.storedEnergy -= power;
@@ -368,13 +331,13 @@ class Plant
             console.log("seed landed");
 
             const faceNormal = this.cubish.getFaceNormal(0, this.vertices, this.indices);
-            console.log("seed face 0 normal " + faceNormal);
+            // console.log("seed face 0 normal " + faceNormal);
 
             // spin the cube so that face 0 is on the ground
             this.cubish.adjustCubeToGround(faceNormal, this.vertices);
 
-    const newFaceNormal = this.cubish.getFaceNormal(0, this.vertices, this.indices);
-    console.log("seed face 0 new normal " + newFaceNormal);
+            // const newFaceNormal = this.cubish.getFaceNormal(0, this.vertices, this.indices);
+            // console.log("seed face 0 new normal " + newFaceNormal);
 
             // lock the floor contact vertices of face 0
             for(var i = 0; i < 4; i++)
@@ -387,6 +350,50 @@ class Plant
         }
 
         return true;
+    }
+
+
+    clone()
+    {
+        const plant = new Plant( this.scene, this.cubish );
+
+        // create a new Model (contains a new seed)
+        plant.model = new Model();
+        plant.model.create();
+
+        // convert it to a custom mesh
+        plant.mesh = plant.cubish.createCustomMesh(plant.scene, plant.model);
+        plant.mesh.setAbsolutePosition( this.worldPosition );
+        plant.mesh.checkCollisions = true;
+
+        // data references, then build the verlet representation for soft-body physics
+        plant.vertices = plant.mesh.getVerticesData(BABYLON.VertexBuffer.PositionKind);
+        plant.indices = plant.mesh.getIndices();
+        plant.verlet = new Verlet( plant.vertices, plant.indices );
+        
+        // find all the leaves (triangles which have a normal with y >= 0)
+        plant.leaves = this.findLeaves();
+
+        // initialise plant variables
+        plant.totalLight = 0;
+        // TODO: should vary depending on plant status as well as size (hibernate at night, growth speed...)
+        plant.costOfLiving = World.costOfLiving * plant.leaves.length;        
+
+        // DNA
+        // TODO: mutate for seeds
+        plant.seedStartDelay = this.seedStartDelay;
+        plant.seedStorePercent = this.seedStorePercent;
+        plant.seedEnergy = this.seedEnergy;
+        plant.seedReleaseDelay = this.seedReleaseDelay;
+        plant.seedReleasePower = this.seedReleasePower;
+        plant.ageDamage = this.ageDamage;
+        plant.maximumAge = this.maximumAge;
+        plant.growthEnergyPercent = this.growthEnergyPercent;
+        plant.growthEnergyCurve = this.growthEnergyCurve;
+        plant.storeEfficiency = this.storeEfficiency;
+        plant.energyPerCell = this.energyPerCell;
+
+        return plant;
     }
       
 }
