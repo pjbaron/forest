@@ -10,6 +10,7 @@ class World
     // physics
     static gravity = -0.01;
     static windForce = 0.5;
+    static gravityVector = new BABYLON.Vector3(0, World.gravity, 0);
 
     // light
     static sunHeight = 256.0;
@@ -28,7 +29,8 @@ class World
     static boostSpeed = 0.1;
 
     // plants
-    static maxPlants = 128;
+    static startPlants = 128;
+    static maxPlants = 200;
     static seedEnergy = 50;    //100;
     static plantSizeLimits = { x: 9, y: 25, z: 9 };
     static costOfLiving = 0.001;    //0.005;
@@ -178,7 +180,7 @@ class World
 
     createPlants()
     {
-        for(var i = 0; i < World.maxPlants; i++)
+        for(var i = 0; i < World.startPlants; i++)
         {
             var plant = new Plant(this.scene, this.cubish);
             plant.create({ x: (Math.random() - 0.5) * World.mapSize, y: World.groundLevel, z: (Math.random() - 0.5) * World.mapSize });

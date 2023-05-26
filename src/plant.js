@@ -1,4 +1,6 @@
 
+// TODO: class is too big, break it down further: seed, growthSystem, energySystem
+
 class Plant
 {
     static id = 0;
@@ -41,6 +43,7 @@ class Plant
         this.seedStore = 0;
         this.seedStartDate = World.time + this.seedStartDelay * World.hoursPerDay;
         this.seedLaunchDate = 0;
+        this.seedVelocity = null;
         this.currentAge = Math.random() * World.plantMaxAge * 0.25;
         this.dateOfBirth = World.time;
         this.launching = false;
@@ -65,13 +68,13 @@ class Plant
 
         // convert it to a custom mesh
         this.mesh = this.cubish.createCustomMesh(this.scene, this.model, {x:0, y:0.5, z:0});
-        this.mesh.setAbsolutePosition( this.worldPosition );
+        this.mesh.setAbsolutePosition(this.worldPosition);
         this.mesh.checkCollisions = true;
 
         // data references, then build the verlet representation for soft-body physics
         this.vertices = this.mesh.getVerticesData(BABYLON.VertexBuffer.PositionKind);
         this.indices = this.mesh.getIndices();
-        this.verlet = new Verlet( this.vertices, this.indices );
+        this.verlet = new Verlet(this.vertices, this.indices, this.worldPosition);
 
 // DEBUG: verify face normal calculations are correct
 //const newFaceNormal = this.cubish.getFaceNormal(0, this.vertices, this.indices);
@@ -180,8 +183,8 @@ class Plant
             }
             else
             {
-                // the seed is full, wait for launch-day
-                if (World.time >= this.seedLaunchDate)
+                // the seed is full, wait for launch-day (and an available plant slot)
+                if (World.time >= this.seedLaunchDate && Control.world.plants.length < World.maxPlants)
                 {
                     // charge the seed's launch price
                     this.seedStore -= this.seedReleasePower;
@@ -303,23 +306,44 @@ class Plant
         const power = Math.min(launchPower, this.storedEnergy);
         this.storedEnergy -= power;
 
-        const angle = Math.random() * Math.PI * 2.0;
-        const lx = Math.sin(angle) * power / 40.0;
-        const lz = Math.cos(angle) * power / 40.0;
+        var force = this.randomHemispherePoint(power / 20.0);
         this.verlet.unlock();
-        this.verlet.move(new BABYLON.Vector3(lx, power / 20.0, lz));
+        this.seedVelocity = force;
         this.launching = true;
+    }
+
+
+    // https://stackoverflow.com/questions/5531827/random-point-on-a-given-sphere
+    randomHemispherePoint(radius)
+    {
+        var u = Math.random();
+        var v = Math.random();
+        var theta = 2 * Math.PI * u;
+        var phi = Math.acos(2 * v - 1);
+        var x = (radius * Math.sin(phi) * Math.cos(theta));
+        var y = Math.abs((radius * Math.sin(phi) * Math.sin(theta)));
+        var z = (radius * Math.cos(phi));
+        return new BABYLON.Vector3(x, y, z);
     }
 
 
     /// make the seed pod fly, control the landing, return false when it is ready to grow
     flyingSeedPod()
     {
+        this.worldPosition.addInPlace(this.seedVelocity);
+        this.mesh.setAbsolutePosition(this.worldPostion);
+        this.seedVelocity.addInPlace(World.gravityVector);
+
         const l = this.vertices.length;
         const grounded = [];
+        const vw = new BABYLON.Vector3.Zero();
         for(var i = 0; i < l; i += 3)
         {
-            if (Math.abs(this.vertices[i + 1] - World.groundLevel) < 0.001)
+            vw.x = this.vertices[i + 0];
+            vw.y = this.vertices[i + 1];
+            vw.z = this.vertices[i + 2];
+            vw.addInPlace(this.worldPosition);
+            if (vw.y - World.groundLevel < 0.001)
             {
                 grounded.push(i);
             }
@@ -356,6 +380,7 @@ class Plant
     clone()
     {
         const plant = new Plant( this.scene, this.cubish );
+        plant.worldPosition = this.worldPosition.clone();
 
         // create a new Model (contains a new seed)
         plant.model = new Model();
@@ -363,13 +388,13 @@ class Plant
 
         // convert it to a custom mesh
         plant.mesh = plant.cubish.createCustomMesh(plant.scene, plant.model);
-        plant.mesh.setAbsolutePosition( this.worldPosition );
+        plant.mesh.setAbsolutePosition( plant.worldPosition );
         plant.mesh.checkCollisions = true;
 
         // data references, then build the verlet representation for soft-body physics
         plant.vertices = plant.mesh.getVerticesData(BABYLON.VertexBuffer.PositionKind);
         plant.indices = plant.mesh.getIndices();
-        plant.verlet = new Verlet( plant.vertices, plant.indices );
+        plant.verlet = new Verlet( plant.vertices, plant.indices, plant.worldPosition );
         
         // find all the leaves (triangles which have a normal with y >= 0)
         plant.leaves = this.findLeaves();

@@ -9,12 +9,13 @@ class Verlet
     static damping = 1.0 - 0.01;
 
 
-    constructor( vertices, indices )
+    constructor( vertices, indices, worldPosition )
     {
         this.vertices = vertices;
         this.oldVertices = null;
         this.lockedVertices = this.lockGroundVertices();
         this.edges = this.indicesToEdges(indices);
+        this.worldPosition = worldPosition;
     }
 
 
@@ -73,13 +74,14 @@ class Verlet
 
     constrainToWorld()
     {
+        const wy = this.worldPosition.y;
         const l = this.vertices.length;
         for(var i = 0; i < l; i += 3)
         {
-            const y = this.vertices[i + 1];
+            const y = this.vertices[i + 1] + wy;
             if (y < World.groundLevel)
             {
-                this.vertices[i + 1] = World.groundLevel;
+                this.vertices[i + 1] = World.groundLevel - wy;
             }
         }
     }
