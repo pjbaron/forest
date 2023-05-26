@@ -29,8 +29,8 @@ class World
     static boostSpeed = 0.1;
 
     // plants
-    static startPlants = 128;
-    static maxPlants = 200;
+    static startPlants = 64;
+    static maxPlants = 256;
     static seedEnergy = 50;    //100;
     static plantSizeLimits = { x: 9, y: 25, z: 9 };
     static costOfLiving = 0.001;    //0.005;

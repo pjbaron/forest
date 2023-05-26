@@ -344,7 +344,7 @@ class Plant
         // wait for seed pod to get one face flat on the ground
         if (grounded.length >= 4)
         {
-            console.log("seed landed");
+            //console.log("seed landed");
 
             const faceNormal = this.cubish.getFaceNormal(0, this.vertices, this.indices);
             // console.log("seed face 0 normal " + faceNormal);
@@ -367,21 +367,19 @@ class Plant
                 total.y += this.vertices[i + 1];
                 total.z += this.vertices[i + 2];
             }
-            var middle = total.scale(1.0 / 8.0);
+            var middle = total.scale(1.0 / 8.0)
 
-            // reposition it on the ground
-            middle.y = World.groundLevel;
-
-            // relocate this plant to that location
-            this.worldPosition = middle;
+            // relocate this plant to that location on the ground
+            this.worldPosition.addInPlace(middle);
+            this.worldPosition.y = World.groundLevel;
             this.mesh.setAbsolutePosition(this.worldPosition);
 
             // reset all vertices to be offsets from that location
             for(var i = 0; i < l; i += 3)
             {
-                this.vertices[i + 0] = this.vertices[i + 0] - this.worldPosition.x;
-                this.vertices[i + 1] = this.vertices[i + 1] - this.worldPosition.y;
-                this.vertices[i + 2] = this.vertices[i + 2] - this.worldPosition.z;
+                this.vertices[i + 0] = this.vertices[i + 0] - middle.x;
+                this.vertices[i + 1] = this.vertices[i + 1] - middle.y;
+                this.vertices[i + 2] = this.vertices[i + 2] - middle.z;
             }
 
             // cancel all forces on the seed vertices, to prevent it twisting on its next update
