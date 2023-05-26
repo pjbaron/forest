@@ -43,7 +43,6 @@ class Plant
         this.seedStore = 0;
         this.seedStartDate = World.time + this.seedStartDelay * World.hoursPerDay;
         this.seedLaunchDate = 0;
-        this.seedVelocity = null;
         this.currentAge = Math.random() * World.plantMaxAge * 0.25;
         this.dateOfBirth = World.time;
         this.launching = false;
@@ -308,7 +307,7 @@ class Plant
 
         var force = this.randomHemispherePoint(power / 20.0);
         this.verlet.unlock();
-        this.seedVelocity = force;
+        this.verlet.move(force);
         this.launching = true;
     }
 
@@ -330,20 +329,13 @@ class Plant
     /// make the seed pod fly, control the landing, return false when it is ready to grow
     flyingSeedPod()
     {
-        this.worldPosition.addInPlace(this.seedVelocity);
-        this.mesh.setAbsolutePosition(this.worldPostion);
-        this.seedVelocity.addInPlace(World.gravityVector);
-
         const l = this.vertices.length;
         const grounded = [];
-        const vw = new BABYLON.Vector3.Zero();
+        const wy = this.worldPosition.y;
         for(var i = 0; i < l; i += 3)
         {
-            vw.x = this.vertices[i + 0];
-            vw.y = this.vertices[i + 1];
-            vw.z = this.vertices[i + 2];
-            vw.addInPlace(this.worldPosition);
-            if (vw.y - World.groundLevel < 0.001)
+            var y = this.vertices[i + 1] + wy;
+            if (Math.abs(y - World.groundLevel) < 0.001)
             {
                 grounded.push(i);
             }
@@ -367,7 +359,32 @@ class Plant
             for(var i = 0; i < 4; i++)
                 this.verlet.lockedVertices[i] = true;
 
-            // cancel all forces on the seed, to prevent it twisting on its next update
+            // find the COM of the first cube in the vertices list
+            var total = new BABYLON.Vector3.Zero();
+            for(var i = 0; i < 8 * 3; i += 3)
+            {
+                total.x += this.vertices[i + 0];
+                total.y += this.vertices[i + 1];
+                total.z += this.vertices[i + 2];
+            }
+            var middle = total.scale(1.0 / 8.0);
+
+            // reposition it on the ground
+            middle.y = World.groundLevel;
+
+            // relocate this plant to that location
+            this.worldPosition = middle;
+            this.mesh.setAbsolutePosition(this.worldPosition);
+
+            // reset all vertices to be offsets from that location
+            for(var i = 0; i < l; i += 3)
+            {
+                this.vertices[i + 0] = this.vertices[i + 0] - this.worldPosition.x;
+                this.vertices[i + 1] = this.vertices[i + 1] - this.worldPosition.y;
+                this.vertices[i + 2] = this.vertices[i + 2] - this.worldPosition.z;
+            }
+
+            // cancel all forces on the seed vertices, to prevent it twisting on its next update
             this.verlet.cancelForces();
 
             return false;
