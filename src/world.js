@@ -31,10 +31,11 @@ class World
     // plants
     static startPlants = 64;
     static maxPlants = 256;
-    static seedEnergy = 50;    //100;
+    static seedEnergy = 50;    //100;   // cost to fill a seed ready for launch
     static plantSizeLimits = { x: 9, y: 25, z: 9 };
     static costOfLiving = 0.001;    //0.005;
     static plantMaxAge = 3 * this.daysPerYear;
+    static cellEnergyCost = 50;     // cost to grow a new cell
 
     // public static variables
     static time = 6.00;

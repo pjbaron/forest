@@ -98,7 +98,8 @@ class Cubish
             {
                 for(var z = -mz; z < mz; z++)
                 {
-                    if (model.voxels[x+mx][y][z+mz] != null)
+                    var cell = model.voxels[x+mx][y][z+mz];
+                    if (cell && cell.grown)
                     {
                         this.attach(positions, indices, x, y, z);
                     }

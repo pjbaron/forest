@@ -47,6 +47,7 @@ class Plant
         this.dateOfBirth = World.time;
         this.launching = false;
         this.worldPosition = null;
+        this.numCells = 0;
     }
 
             
@@ -57,6 +58,7 @@ class Plant
         // build a 'plant' model
         this.model = new Model();
         this.model.create();
+        this.numCells = 1;
         // this.model.add({x: 0, y: 1, z: 0});
         // this.model.add({x: 0, y: 2, z: 0});
         // this.model.add({x: 0, y: 3, z: 0});
@@ -65,22 +67,8 @@ class Plant
         // this.model.add({x: 0, y: 2, z: -1});
         // this.model.add({x: 0, y: 2, z: 1});
 
-        // convert it to a custom mesh
-        this.mesh = this.cubish.createCustomMesh(this.scene, this.model, {x:0, y:0.5, z:0});
-        this.mesh.setAbsolutePosition(this.worldPosition);
-        this.mesh.checkCollisions = true;
-
-        // data references, then build the verlet representation for soft-body physics
-        this.vertices = this.mesh.getVerticesData(BABYLON.VertexBuffer.PositionKind);
-        this.indices = this.mesh.getIndices();
-        this.verlet = new Verlet(this.vertices, this.indices, this.worldPosition);
-
-// DEBUG: verify face normal calculations are correct
-//const newFaceNormal = this.cubish.getFaceNormal(0, this.vertices, this.indices);
-//console.log("seed face 0 start normal " + newFaceNormal);
-    
-        // find all the leaves (triangles which have a normal with y >= 0)
-        this.leaves = this.findLeaves();
+        // build a 'plant' mesh and find its light receiving surfaces ('leaves')
+        this.buildMesh();
 
         // initialise plant variables
         this.launching = false;
@@ -148,17 +136,52 @@ class Plant
     }
 
 
+    buildMesh()
+    {
+        // build a custom mesh from the model
+        this.mesh = this.cubish.createCustomMesh(this.scene, this.model, {x:0, y:0.5, z:0});
+        this.mesh.setAbsolutePosition(this.worldPosition);
+        this.mesh.checkCollisions = true;
+
+        // data references, then build the verlet representation for soft-body physics
+        this.vertices = this.mesh.getVerticesData(BABYLON.VertexBuffer.PositionKind);
+        this.indices = this.mesh.getIndices();
+        this.verlet = new Verlet(this.vertices, this.indices, this.worldPosition);
+
+// DEBUG: verify face normal calculations are correct
+//const newFaceNormal = this.cubish.getFaceNormal(0, this.vertices, this.indices);
+//console.log("seed face 0 start normal " + newFaceNormal);
+    
+        // find all the leaves (triangles which have a normal with y >= 0)
+        this.leaves = this.findLeaves();
+    }
+
+
     plantGrowth( totalEnergy )
     {
-        // allocate to growth
-        var forGrowth = totalEnergy * Math.min(this.growthEnergyPercent, 1.0);
-        totalEnergy -= forGrowth;
-        this.growthEnergy += forGrowth;
-        // TODO: spend growth energy on growth immediately
+        // if we're not fully grown yet
+        if (this.model.cellCount > this.numCells)
+        {
+            // allocate to growth
+            var forGrowth = totalEnergy * Math.min(this.growthEnergyPercent, 1.0);
+            totalEnergy -= forGrowth;
+            this.growthEnergy += forGrowth;
+            // TODO: spend growth energy on growth immediately
 
-        // modify how much of our energy we spend on growth
-        this.growthEnergyPercent *= this.growthEnergyCurve;
-        // TODO: add growth energy curve over the course of a day
+            // modify how much of our energy we spend on growth
+            this.growthEnergyPercent *= this.growthEnergyCurve;
+            // TODO: add growth energy curve over the course of a day
+
+            if (this.growthEnergy >= World.cellEnergyCost)
+            {
+                if (this.model.grow())
+                {
+                    this.growthEnergy -= World.cellEnergyCost;
+                    this.numCells++;
+                    this.buildMesh();
+                }
+            }
+        }
         return totalEnergy;
     }
 
