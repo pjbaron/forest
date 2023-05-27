@@ -52,35 +52,40 @@ class Model
         function checkNeighbours(x, y, z)
         {
             let canGrow = [];
-            if (x - 1 >= 0)
+            const neighbours = [
+                {x:-1,y:0,z:0},{x:1,y:0,z:0},
+                {x:0,y:-1,z:0},{x:0,y:1,z:0},
+                {x:0,y:0,z:-1},{x:0,y:0,z:1}
+            ];
+            
+            const l = neighbours.length;
+            for(var i = 0; i < l; i++)
             {
-                let lft = this.voxels[x - 1][y][z];
-                if (lft)
-                {
-                    if (lft.grown)
-                        canGrow.concat(checkNeighbours(x - 1, y, z));
-                    else
-                        canGrow.push(lft);
-                }
+                var nx = x + neighbours[i].x;
+                if (nx < 0 || nx >= this.size.x) continue;
+                var ny = y + neighbours[i].y;
+                if (ny < 0 || ny >= this.size.y) continue;
+                var nz = z + neighbours[i].z;
+                if (nz < 0 || nz >= this.size.z) continue;
+                let cell = this.voxels[nx][ny][nz];
+                if (!cell || cell.checked) continue;
+                cell.checked = true;
+                if (cell.grown)
+                    canGrow = canGrow.concat(checkNeighbours.call(this, nx, ny, nz));
+                else
+                    canGrow.push(cell);
             }
-            if (x + 1 < this.size.x)
-            {
-                let rgt = this.voxels[x + 1][y][z];
-                if (rgt)
-                {
-                    if (rgt.grown)
-                        canGrow.concat(checkNeighbours(x + 1, y, z));
-                    else
-                        canGrow.push(rgt);
-                }
-            }
-            // TODO: up/down/forward/back
             return canGrow;
         }
 
-        const list = checkNeighbours(this.seedLocation.x, this.seedLocation.y, this.seedLocation.z);
+        this.clearChecks();
+
+        const list = checkNeighbours.call(this, this.seedLocation.x, this.seedLocation.y, this.seedLocation.z);
+
         if (list.length > 0)
         {
+            // pick one at random
+            // TODO: use highest cell energy if I start to store it on a per-cell basis
             const i = Math.floor(Math.random() * list.length);
             const cell = list[i];
             cell.grown = true;
@@ -88,6 +93,22 @@ class Model
         }
 
         return false;
+    }
+
+
+    clearChecks()
+    {
+        for(var y = 0; y < this.size.y; y++)
+        {
+            for(var z = 0; z < this.size.z; z++)
+            {
+                for(var x = 0; x < this.size.x; x++)
+                {
+                    const cell = this.voxels[x][y][z];
+                    if (cell) cell.checked = false;
+                }
+            }
+        }
     }
 
 

@@ -11,6 +11,9 @@ class Cell
         this.lightReceived = 0;
         this.grown = false;
         this.seed = false;
+
+        // TODO: urgh! used by recursive search to avoid infinite loops in model...
+        this.checked = false;
     }
 
 

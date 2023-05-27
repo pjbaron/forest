@@ -59,8 +59,8 @@ class Plant
         this.model = new Model();
         this.model.create();
         this.numCells = 1;
-        // this.model.add({x: 0, y: 1, z: 0});
-        // this.model.add({x: 0, y: 2, z: 0});
+        this.model.add({x: 0, y: 1, z: 0});
+        this.model.add({x: 0, y: 2, z: 0});
         // this.model.add({x: 0, y: 3, z: 0});
         // this.model.add({x: 1, y: 1, z: 0});
         // this.model.add({x: -1, y: 1, z: 0});
@@ -138,7 +138,11 @@ class Plant
 
     buildMesh()
     {
-        // build a custom mesh from the model
+        // get rid of an old mesh
+        if (this.mesh)
+            this.mesh.dispose();
+
+        // build a new custom mesh from the model
         this.mesh = this.cubish.createCustomMesh(this.scene, this.model, {x:0, y:0.5, z:0});
         this.mesh.setAbsolutePosition(this.worldPosition);
         this.mesh.checkCollisions = true;
