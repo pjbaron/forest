@@ -160,26 +160,29 @@ class Model
 
     mutate()
     {
-        // pick a random location inside the model voxel space
-        let mx = Math.floor(this.size.x / 2);
-        let mz = Math.floor(this.size.z / 2);
-        let rx = Math.floor(Math.random() * this.size.x);
-        let ry = Math.floor(Math.random() * this.size.y);
-        let rz = Math.floor(Math.random() * this.size.z);
+        for(let i = 0; i < World.mutationAttempts; i++)
+        {
+            // pick a random location inside the model voxel space
+            let mx = Math.floor(this.size.x / 2);
+            let mz = Math.floor(this.size.z / 2);
+            let rx = Math.floor(Math.random() * this.size.x);
+            let ry = Math.floor(Math.random() * this.size.y);
+            let rz = Math.floor(Math.random() * this.size.z);
 
-        // mutate it
-        let cell = this.voxels[rx][ry][rz];
-        if (cell == null)
-        {
-            //console.log(Math.floor(World.time / 24 * 100) / 100 + ": mutation gained " + (rx + mx) + "," + ry + "," + (rz + mz));
-            this.add({ x: rx - mx, y: ry, z: rz - mz });
-        }
-        else
-        {
-            if (Math.random() < World.mutateRemoveChance)
+            // mutate it
+            let cell = this.voxels[rx][ry][rz];
+            if (cell == null)
             {
-                this.voxels[rx][ry][rz] = null;
-                this.cellCount--;
+                //console.log(Math.floor(World.time / 24 * 100) / 100 + ": mutation gained " + (rx + mx) + "," + ry + "," + (rz + mz));
+                this.add({ x: rx - mx, y: ry, z: rz - mz });
+            }
+            else
+            {
+                if (Math.random() < World.mutateRemoveChance)
+                {
+                    this.voxels[rx][ry][rz] = null;
+                    this.cellCount--;
+                }
             }
         }
 

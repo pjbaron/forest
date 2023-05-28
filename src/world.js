@@ -15,7 +15,7 @@ class World
     // light
     static sunHeight = 256.0;
     static indirectLightPercent = 0.5;  // pcent of direct sunlight which arrives indirectly
-    static lightEnergyScaler = 0.01;    // the default plant receives ~125 light per tick, scale it down by this
+    static lightEnergyScaler = 0.005;   // scale light received down by this
 
     // time, seasons and weather
     static hoursPerDay = 24.0;          // hour 0 = midnight
@@ -31,13 +31,14 @@ class World
     // plants
     static startPlants = 50;
     static maxPlants = 200;
-    static seedEnergy = 60;             // cost to fill a seed ready for launch
+    static seedEnergy = 75;             // cost to fill a seed ready for launch
     static plantSizeLimits = { x: 9, y: 15, z: 9 };
-    static costOfLivingPlant = 0.005;
-    static costOfLivingCell  = 0.0005;
+    static costOfLivingPlant = 0.010;
+    static costOfLivingCell  = 0.001;
     static plantMaxAge = 50000;         // update cycles
     static cellEnergyCost = 40;         // cost to grow a new cell
     static mutateRemoveChance = 0.25;   // % chance to remove the cell when mutate hits one
+    static mutationAttempts = 5;        // how many random cells might get mutated in a new model
 
     // public static variables
     static time = 0;
