@@ -35,7 +35,7 @@ class Plant
         this.seedStorePercent = 0.40;           // how much of total energy goes into a growing seed
         this.seedEnergy = World.seedEnergy;     // how much energy does the plant's seed require
         this.seedReleaseDelay = 0.1;            // delay in days before a full seed will be released
-        this.seedReleasePower = 6;              // amount of energy to propel the seed on release
+        this.seedReleasePower = 7;              // amount of energy to propel the seed on release
         this.ageDamage = 1.0;                   // how quickly does this plant age
         this.maximumAge = World.plantMaxAge;    // maximum age for this plant
         this.growthEnergyPercent = 0.50;        // amount of energy the plant uses for growth (stored = total - seed - growth)
@@ -190,6 +190,7 @@ class Plant
         this.mesh = this.cubish.createCustomMesh(this.scene, this.model, {x:0, y:0.5, z:0});
         this.mesh.setAbsolutePosition(this.worldPosition);
         this.mesh.checkCollisions = true;
+        Control.world.shadowGenerator.addShadowCaster(this.mesh);
 
         // data references, then build the verlet representation for soft-body physics
         this.vertices = this.mesh.getVerticesData(BABYLON.VertexBuffer.PositionKind);

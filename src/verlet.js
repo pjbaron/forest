@@ -3,7 +3,7 @@
 
 class Verlet
 {
-    static numIterations = 5;
+    static numIterations = 7;
 
     static stiffness = 0.90;
     static damping = 1.0 - 0.01;

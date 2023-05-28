@@ -8,8 +8,8 @@ class World
     static mapSize = 60;
 
     // physics
-    static gravity = -0.01;
-    static windForce = 5.0;
+    static gravity = -0.005;
+    static windForce = 2.0;
     static gravityVector = new BABYLON.Vector3(0, World.gravity, 0);
 
     // light
@@ -20,7 +20,7 @@ class World
     // time, seasons and weather
     static hoursPerDay = 24.0;          // hour 0 = midnight
     static daysPerYear = 25;            // day 0 = mid-winter
-    static daySpeed = 0.5;
+    static daySpeed = 0.75;
 
     // camera
     static eyeLevel = 5;
@@ -196,7 +196,6 @@ class World
     addNewPlant( plant )
     {
         this.plants.push( plant );
-        this.shadowGenerator.addShadowCaster(plant.mesh);
     }
 
 
