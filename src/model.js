@@ -118,15 +118,22 @@ class Model
         const m = new Model();
         m.size = { x:this.size.x, y:this.size.y, z:this.size.z };
         m.voxels = new Array(this.size.x).fill(null).map(() => new Array(this.size.y).fill(null).map(() => new Array(this.size.z).fill(null)));
+        m.seedLocation = { x: this.seedLocation.x, y: this.seedLocation.y, z: this.seedLocation.z };
         for(var y = 0; y < m.size.y; y++)
         {
             for(var z = 0; z < m.size.z; z++)
             {
                 for(var x = 0; x < m.size.x; x++)
                 {
-                    var cell = this.voxels[x][y][z].clone();
-                    cell.grown = cell.seed;
-                    m.voxels[x][y][z] = cell;
+                    const cell = this.voxels[x][y][z];
+                    if (!cell)
+                        m.voxels[x][y][z] = cell;
+                    else
+                    {
+                        const ccell = cell.clone();
+                        ccell.grown = ccell.seed;
+                        m.voxels[x][y][z] = ccell;
+                    }
                 }
             }
         }

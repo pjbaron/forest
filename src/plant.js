@@ -424,9 +424,9 @@ class Plant
         const plant = new Plant( this.scene, this.cubish );
         plant.worldPosition = this.worldPosition.clone();
 
-        // create a new Model (contains a new seed)
-        plant.model = new Model();
-        plant.model.create();
+        // create an ungrown Model (contains a single grown seed cell)
+        plant.model = this.model.clone();
+        plant.numCells = 1;
 
         // convert it to a custom mesh
         plant.mesh = plant.cubish.createCustomMesh(plant.scene, plant.model);

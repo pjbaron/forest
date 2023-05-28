@@ -23,6 +23,7 @@ class Cell
         this.nutrients = nutrients;
         this.seed = isSeed;
         this.grown = isSeed;
+        this.checked = false;
     }
 
 
