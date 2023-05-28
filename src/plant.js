@@ -22,20 +22,51 @@ class Plant
         this.verlet = null;
         this.leaves = null;
 
+        this.setParams();
+        this.mutateParams(this);
+        this.setControlVars();
+    }
+
+
+    setParams()
+    {
         // DNA
-        // TODO: vary these for each plant
-        this.seedStartDelay = 3.0;              // delay in days before plant starts growing a seed
-        this.seedStorePercent = 0.25;           // how much of total energy goes into a growing seed
+        this.seedStartDelay = 2.0;              // delay in days before plant starts growing a seed
+        this.seedStorePercent = 0.40;           // how much of total energy goes into a growing seed
         this.seedEnergy = World.seedEnergy;     // how much energy does the plant's seed require
-        this.seedReleaseDelay = 0;              // delay in days before a full seed will be released
-        this.seedReleasePower = 10;             // amount of energy to propel the seed on release
-        this.ageDamage = 1.0;                   // how quickly do this plant's cells age
+        this.seedReleaseDelay = 0.1;            // delay in days before a full seed will be released
+        this.seedReleasePower = 6;              // amount of energy to propel the seed on release
+        this.ageDamage = 1.0;                   // how quickly does this plant age
         this.maximumAge = World.plantMaxAge;    // maximum age for this plant
-        this.growthEnergyPercent = 0.2;         // amount of energy the plant uses for growth (stored = total - seed - growth)
+        this.growthEnergyPercent = 0.50;        // amount of energy the plant uses for growth (stored = total - seed - growth)
         this.growthEnergyCurve = 0.99999;       // growth energy percent is multiplied by this constant daily
         this.storeEfficiency = 0.75;            // amount of energy that can be retrieved from store
-        this.energyPerCell = 1000;              // total amount of energy that can be stored in each cell
+        this.energyPerCell = 50;                // total amount of energy that can be stored in each cell
+    }
 
+
+    mutateParams(plant)
+    {
+        function tenPcent() {
+            return 0.9 + Math.random() * 0.2;
+        }
+        // DNA
+        this.seedStartDelay = plant.seedStartDelay * tenPcent();
+        this.seedStorePercent = Math.min(plant.seedStorePercent * tenPcent(), 0.9);
+        this.seedEnergy = plant.seedEnergy * tenPcent();
+        this.seedReleaseDelay = plant.seedReleaseDelay * tenPcent();
+        this.seedReleasePower = plant.seedReleasePower * tenPcent();
+        this.ageDamage = plant.ageDamage * tenPcent();
+        this.maximumAge = plant.maximumAge * tenPcent();
+        this.growthEnergyPercent = Math.min(plant.growthEnergyPercent * tenPcent(), 0.9);
+        this.growthEnergyCurve = Math.min(plant.growthEnergyCurve * tenPcent(), 0.9999999);
+        this.storeEfficiency = Math.min(plant.storeEfficiency * tenPcent(), 0.9);
+        this.energyPerCell = plant.energyPerCell * tenPcent();
+    }
+
+
+    setControlVars()
+    {
         // control variables
         this.totalLight = 0;
         this.storedEnergy = World.seedEnergy;
@@ -43,11 +74,11 @@ class Plant
         this.seedStore = 0;
         this.seedStartDate = World.time + this.seedStartDelay * World.hoursPerDay;
         this.seedLaunchDate = 0;
-        this.currentAge = Math.random() * World.plantMaxAge * 0.25;
         this.dateOfBirth = World.time;
         this.launching = false;
         this.worldPosition = null;
         this.numCells = 0;
+        this.currentAge = 0;
     }
 
             
@@ -55,17 +86,12 @@ class Plant
     {
         this.worldPosition = new BABYLON.Vector3(worldPosition.x, worldPosition.y, worldPosition.z);
 
-        // build a 'plant' model
+        // build a 'plant' model (3 cells, stacked vertically)
         this.model = new Model();
         this.model.create();
         this.numCells = 1;
         this.model.add({x: 0, y: 1, z: 0});
         this.model.add({x: 0, y: 2, z: 0});
-        // this.model.add({x: 0, y: 3, z: 0});
-        // this.model.add({x: 1, y: 1, z: 0});
-        // this.model.add({x: -1, y: 1, z: 0});
-        // this.model.add({x: 0, y: 2, z: -1});
-        // this.model.add({x: 0, y: 2, z: 1});
 
         // build a 'plant' mesh and find its light receiving surfaces ('leaves')
         this.buildMesh();
@@ -74,7 +100,8 @@ class Plant
         this.launching = false;
         this.totalLight = 0;
         // TODO: should vary depending on plant status as well as size (hibernate at night, growth speed...)
-        this.costOfLiving = World.costOfLiving * this.leaves.length;
+        this.costOfLivingPlant = World.costOfLivingPlant;
+        this.costOfLivingCells = World.costOfLivingCell * this.leaves.length;
 
         // DEBUG: test launch
         //if (this.id == 0)
@@ -130,9 +157,26 @@ class Plant
 
         // store the remaining energy at a loss, with a cap
         this.storedEnergy = Math.min(this.storedEnergy + totalEnergy * this.storeEfficiency, this.energyPerCell * this.model.cellCount);
-        this.storedEnergy -= this.costOfLiving;
+        this.storedEnergy -= this.costOfLivingPlant + this.costOfLivingCells;
+        if (this.storedEnergy <= 0)
+            console.log(Math.floor(World.time / 24 * 100) / 100 + ": " + this.mesh.name + " died of low energy  " + Math.floor((World.time - this.dateOfBirth) / 24 * 100) / 100 + " days (" + this.currentAge + ")");
+
+        this.ageing();
 
         return (this.storedEnergy > 0);
+    }
+
+
+    ageing()
+    {
+        this.currentAge += this.ageDamage;
+        // chance of death increases every update cycle, never reaches a guarantee
+        const deathChance = 1.0 / Math.max((this.maximumAge - this.currentAge), 1.1);
+        if (Math.random() < deathChance)
+        {
+            this.storedEnergy = 0;
+            console.log(Math.floor(World.time / 24 * 100) / 100 + ": " + this.mesh.name + " died of old age at " + Math.floor((World.time - this.dateOfBirth) / 24 * 100) / 100 + " days (" + this.currentAge + ")");
+        }
     }
 
 
@@ -221,7 +265,7 @@ class Plant
                         // TODO: mutations to DNA
                         Control.world.addNewPlant(seed);
                         seed.launchSeed(seed.seedReleasePower);
-                        console.log(World.time + ": " + this.mesh.name + " seeded.");
+                        console.log(Math.floor(World.time / 24 * 100) / 100 + ": " + this.mesh.name + " seeded to " + seed.mesh.name);
                     }
                     this.seedStore = 0;
                     this.seedStartDate = World.time + this.seedStartDelay * World.hoursPerDay;
@@ -382,9 +426,8 @@ class Plant
             // const newFaceNormal = this.cubish.getFaceNormal(0, this.vertices, this.indices);
             // console.log("seed face 0 new normal " + newFaceNormal);
 
-            // lock the floor contact vertices of face 0
-            for(var i = 0; i < 4; i++)
-                this.verlet.lockedVertices[i] = true;
+            // lock the floor contacting vertices
+            this.verlet.lockToFloor();
 
             // find the COM of the first cube in the vertices list
             var total = new BABYLON.Vector3.Zero();
@@ -421,11 +464,14 @@ class Plant
 
     clone()
     {
-        const plant = new Plant( this.scene, this.cubish );
+        const plant = new Plant(this.scene, this.cubish);
+        plant.mutateParams(this);
+        plant.setControlVars();
         plant.worldPosition = this.worldPosition.clone();
 
         // create an ungrown Model (contains a single grown seed cell)
         plant.model = this.model.clone();
+        plant.model.mutate();
         plant.numCells = 1;
 
         // convert it to a custom mesh
@@ -444,7 +490,8 @@ class Plant
         // initialise plant variables
         plant.totalLight = 0;
         // TODO: should vary depending on plant status as well as size (hibernate at night, growth speed...)
-        plant.costOfLiving = World.costOfLiving * plant.leaves.length;        
+        plant.costOfLivingPlant = World.costOfLivingPlant;
+        plant.costOfLivingCells = World.costOfLivingCell * plant.leaves.length;
 
         // DNA
         // TODO: mutate for seeds

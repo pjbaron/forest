@@ -9,7 +9,7 @@ class World
 
     // physics
     static gravity = -0.01;
-    static windForce = 0.5;
+    static windForce = 5.0;
     static gravityVector = new BABYLON.Vector3(0, World.gravity, 0);
 
     // light
@@ -26,20 +26,22 @@ class World
     static eyeLevel = 5;
     static groundLevel = 0;
     static cameraSpeed = 0.1;
-    static boostSpeed = 0.1;
+    static boostSpeed = 0.15;
 
     // plants
-    static startPlants = 64;
-    static maxPlants = 256;
-    static seedEnergy = 60;    //100;   // cost to fill a seed ready for launch
-    static plantSizeLimits = { x: 9, y: 25, z: 9 };
-    static costOfLiving = 0.001;    //0.005;
-    static plantMaxAge = 3 * this.daysPerYear;
-    static cellEnergyCost = 50;     // cost to grow a new cell
+    static startPlants = 50;
+    static maxPlants = 200;
+    static seedEnergy = 60;             // cost to fill a seed ready for launch
+    static plantSizeLimits = { x: 9, y: 15, z: 9 };
+    static costOfLivingPlant = 0.005;
+    static costOfLivingCell  = 0.0005;
+    static plantMaxAge = 50000;         // update cycles
+    static cellEnergyCost = 40;         // cost to grow a new cell
+    static mutateRemoveChance = 0.25;   // % chance to remove the cell when mutate hits one
 
     // public static variables
-    static time = 6.00;
-    static dayTime = World.time;
+    static time = 0;
+    static dayTime = 0;
 
 
 
@@ -59,7 +61,7 @@ class World
         this.skyBox = null;
 
         World.time = 6.00;
-        World.dayTime = World.time;
+        World.dayTime = World.time % 24;
     }
 
 
@@ -142,7 +144,7 @@ class World
             const plant = this.plants[i];
             if (!plant.update( wind, i ))
             {
-                console.log(World.dayTime + ": " + plant.mesh.name + " died, leaving [" + (this.plants.length - 1) + "]");
+                //console.log(Math.floor(World.time / 24 * 100) / 100 + ": " + plant.mesh.name + " died, leaving [" + (this.plants.length - 1) + "]");
                 plant.destroy();
                 this.plants.splice( i, 1 );
             }

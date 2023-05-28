@@ -44,9 +44,8 @@ class Model
     }
 
 
-    /// find an ungrown cell, adjacent to a grown cell, and grow it
-    /// return false if none found
-    grow()
+    // callback should return true when the cell should be added to the list
+    recurseFromSeed(callback, searchFromMatch)
     {
         // recursive neighbour search, breadth first
         function checkNeighbours(x, y, z)
@@ -70,17 +69,34 @@ class Model
                 let cell = this.voxels[nx][ny][nz];
                 if (!cell || cell.checked) continue;
                 cell.checked = true;
-                if (cell.grown)
-                    canGrow = canGrow.concat(checkNeighbours.call(this, nx, ny, nz));
-                else
+                var match = callback(cell);
+                if (match)
+                {
                     canGrow.push(cell);
+                    if (searchFromMatch)
+                        canGrow = canGrow.concat(checkNeighbours.call(this, nx, ny, nz));
+                }
+                else
+                {
+                    canGrow = canGrow.concat(checkNeighbours.call(this, nx, ny, nz));
+                }
             }
             return canGrow;
         }
 
         this.clearChecks();
 
-        const list = checkNeighbours.call(this, this.seedLocation.x, this.seedLocation.y, this.seedLocation.z);
+        return checkNeighbours.call(this, this.seedLocation.x, this.seedLocation.y, this.seedLocation.z);
+    }
+
+
+    /// find an ungrown cell, adjacent to a grown cell, and grow it
+    /// return false if none found
+    grow()
+    {
+        const list = this.recurseFromSeed(function(cell) {
+            return !cell.grown;
+        }, false);
 
         if (list.length > 0)
         {
@@ -139,6 +155,56 @@ class Model
         }
         m.cellCount = this.cellCount;
         return m;
+    }
+
+
+    mutate()
+    {
+        // pick a random location inside the model voxel space
+        let mx = Math.floor(this.size.x / 2);
+        let mz = Math.floor(this.size.z / 2);
+        let rx = Math.floor(Math.random() * this.size.x);
+        let ry = Math.floor(Math.random() * this.size.y);
+        let rz = Math.floor(Math.random() * this.size.z);
+
+        // mutate it
+        let cell = this.voxels[rx][ry][rz];
+        if (cell == null)
+        {
+            //console.log(Math.floor(World.time / 24 * 100) / 100 + ": mutation gained " + (rx + mx) + "," + ry + "," + (rz + mz));
+            this.add({ x: rx - mx, y: ry, z: rz - mz });
+        }
+        else
+        {
+            if (Math.random() < World.mutateRemoveChance)
+            {
+                this.voxels[rx][ry][rz] = null;
+                this.cellCount--;
+            }
+        }
+
+        // validate the shape and kill all disconnected cells
+
+        // mark all connected cells as 'checked'
+        const list = this.recurseFromSeed(function(cell){
+            return true;
+        }, true);
+
+        for(var y = 0; y < this.size.y; y++)
+        {
+            for(var z = 0; z < this.size.z; z++)
+            {
+                for(var x = 0; x < this.size.x; x++)
+                {
+                    const cell = this.voxels[x][y][z];
+                    if (cell && !cell.checked)
+                    {
+                        this.voxels[x][y][z] = null;
+                        this.cellCount--;
+                    }
+                }
+            }
+        }
     }
 
 }

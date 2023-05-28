@@ -106,13 +106,13 @@ class Verlet
             var offx = dx * pcent;
             var offy = dy * pcent;
             var offz = dz * pcent;
-            if (!this.lockedVertices[a])
+            if (!this.lockedVertices[a / 3])
             {
                 this.vertices[a + 0] += offx;
                 this.vertices[a + 1] += offy;
                 this.vertices[a + 2] += offz;
             }
-            if (!this.lockedVertices[b])
+            if (!this.lockedVertices[b / 3])
             {
                 this.vertices[b + 0] -= offx;
                 this.vertices[b + 1] -= offy;
@@ -169,6 +169,24 @@ class Verlet
     {
         const memVertices = this.vertices.slice();
         this.oldVertices = memVertices;
+    }
+
+
+    lockToFloor()
+    {
+        const l = this.lockedVertices.length;
+        for(var i = 0; i < l; i++)
+        {
+            if (Math.abs(this.vertices[i * 3 + 1] - World.groundLevel) < 0.01)
+            {
+                this.vertices[i * 3 + 1] = World.groundLevel;
+                this.lockedVertices[i] = true;
+            }
+            else
+            {
+                this.lockedVertices[i] = false;
+            }
+        }
     }
 
 
