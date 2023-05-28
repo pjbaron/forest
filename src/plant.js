@@ -479,6 +479,7 @@ class Plant
         plant.mesh = plant.cubish.createCustomMesh(plant.scene, plant.model);
         plant.mesh.setAbsolutePosition( plant.worldPosition );
         plant.mesh.checkCollisions = true;
+        Control.world.shadowGenerator.addShadowCaster(plant.mesh);
 
         // data references, then build the verlet representation for soft-body physics
         plant.vertices = plant.mesh.getVerticesData(BABYLON.VertexBuffer.PositionKind);

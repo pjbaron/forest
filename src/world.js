@@ -33,7 +33,7 @@ class World
     static maxPlants = 200;
     static seedEnergy = 75;             // cost to fill a seed ready for launch
     static plantSizeLimits = { x: 9, y: 15, z: 9 };
-    static costOfLivingPlant = 0.010;
+    static costOfLivingPlant = 0.015;
     static costOfLivingCell  = 0.001;
     static plantMaxAge = 50000;         // update cycles
     static cellEnergyCost = 40;         // cost to grow a new cell
